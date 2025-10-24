@@ -43,7 +43,7 @@ This serves as a powerful prototype for accessibility tools (real-time captionin
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/your-username/voice-ai-challenge.git](https://github.com/your-username/voice-ai-challenge.git)
+    git clone https://github.com/shyamksateesh/voice-ai-challenge.git
     cd voice-ai-challenge
     ```
 
