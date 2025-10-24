@@ -1,29 +1,39 @@
-# Python cache
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Jupyter Notebook cache
+# Environment
+.env
+venv/
+env/
+*.env
+
+# Media Files - DO NOT TRACK THESE
+*.mp4
+*.mov
+*.avi
+*.mp3
+*.wav
+*.m4a
+*.flac
+
+# Jupyter Notebooks
 .ipynb_checkpoints/
 *.ipynb
 
-# Media files (inputs/outputs)
-*.mp4
-*.mp3
-*.mov
-*.avi
-*.m4a
-*.flac
-*.wav
-
-# --- Project Folders ---
-# Ignore the *contents* of these folders
+# Project Folders
+# Ignore the contents of these folders
 uploads/*
 outputs/*
 temp_demucs_output/
 
-# --- But DO NOT ignore the folders themselves ---
-# We want the folders, just not their contents.
-# (This is a bit advanced, you can also just add .gitkeep files)
-!uploads/
-!outputs/
-!temp_demucs_output/
+# But keep the folders themselves (so they exist for the app)
+# by not ignoring a .gitkeep file inside them.
+!uploads/.gitkeep
+!outputs/.gitkeep
+!temp_demucs_output/.gitkeep
+
+# System Files
+.DS_Store

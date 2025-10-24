@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyric Agent Processor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, .1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* <<< NEW: Recording indicator */
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+
+    <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center">Lyric Agent</h1>
+        
+        <!-- Upload Form -->
+        <form id="upload-form" class="space-y-6">
+            <div>
+                <label for="file" class="block text-sm font-medium text-gray-300">1. Upload Video or Audio File</label>
+                <input type="file" name="file" id="file"
+                       class="mt-1 block w-full text-sm text-gray-400
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-md file:border-0
+                              file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600"/>
+            </div>
+
+            <!-- <<< NEW: Audio Recording Section -->
+            <div class="text-center text-gray-400 text-sm">OR</div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300">Record Audio from Microphone</label>
+                <div class="mt-2 flex items-center space-x-3">
+                    <button type="button" id="record-button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-150">
+                        Start Recording
+                    </button>
+                    <button type="button" id="stop-button" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-150 hidden">
+                        Stop Recording
+                    </button>
+                </div>
+                <div id="recording-status" class="mt-2 flex items-center justify-center space-x-2 hidden">
+                    <div class="recording-dot"></div>
+                    <span class="text-red-400 text-sm">Recording...</span>
+                </div>
+                <div id="record-success" class="mt-2 text-center text-green-400 text-sm hidden">
+                    Audio recorded! Ready to process.
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700"></div>
+
+            <div>
+                <label for="model" class="block text-sm font-medium text-gray-300">2. Whisper Model</label>
+                <select name="model" id="model" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md p-2">
+                    <option value="small.en">Small (Fastest)</option>
+                    <option value="medium.en" selected>Medium (Recommended)</option>
+                    <option value="large">Large (Slowest, Most Accurate)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300">3. Processing Options</label>
+                <div class="mt-2 space-y-2">
+                    <div class="flex items-center">
+                        <input id="wipe_text" name="wipe_text" type="checkbox" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                        <label for="wipe_text" class="ml-3 block text-sm text-gray-300">Enable Karaoke Wipe-Text (Very Slow)</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="separate_vocals" name="separate_vocals" type="checkbox" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                        <label for="separate_vocals" class="ml-3 block text-sm text-gray-300">Enable Vocal Separation (Very Slow)</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-button"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150">
+                Start Processing
+            </button>
+        </form>
+
+        <!-- Status/Result Display -->
+        <div id="status-container" class="mt-6 text-center hidden">
+            <div class="flex justify-center items-center space-x-3">
+                <div id="spinner" class="spinner hidden"></div>
+                <p id="status-message" class="text-lg"></p>
+            </div>
+            
+            <!-- <<< NEW: Container for embedded video -->
+            <div id="result-video-container" class="mt-6 hidden">
+                <video id="result-video" class="w-full rounded-lg" controls></video>
+            </div>
+
+            <div id="result-download-container" class="mt-4 hidden">
+                <a id="download-link" href="#"
+                   class="w-full block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition duration-150">
+                   Download Processed File
+                </a>
+            </div>
+            
+            <div id="error-container" class="mt-4 hidden">
+                <p class="text-red-400" id="error-message"></p>
+            </div>
+
+            <!-- <<< NEW: "Process Another" Button -->
+            <button type="button" id="reset-button" class="mt-6 text-sm text-blue-400 hover:underline hidden">
+                Process Another File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const statusContainer = document.getElementById('status-container');
+        const statusMessage = document.getElementById('status-message');
+        const spinner = document.getElementById('spinner');
+        
+        const resultVideoContainer = document.getElementById('result-video-container');
+        const resultVideo = document.getElementById('result-video');
+        const resultDownloadContainer = document.getElementById('result-download-container');
+        const downloadLink = document.getElementById('download-link');
+        
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+        const resetButton = document.getElementById('reset-button');
+        const submitButton = document.getElementById('submit-button');
+        const fileInput = document.getElementById('file');
+
+        // <<< NEW: Recording elements
+        const recordButton = document.getElementById('record-button');
+        const stopButton = document.getElementById('stop-button');
+        const recordingStatus = document.getElementById('recording-status');
+        const recordSuccess = document.getElementById('record-success');
+
+        let pollInterval;
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+
+        // --- NEW: Recording Logic ---
+        recordButton.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioChunks = [];
+                    recordingStatus.classList.add('hidden');
+                    recordSuccess.classList.remove('hidden');
+                    // Stop all tracks to turn off the mic indicator
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                recordButton.classList.add('hidden');
+                stopButton.classList.remove('hidden');
+                recordingStatus.classList.remove('hidden');
+                recordSuccess.classList.add('hidden');
+                fileInput.disabled = true; // Disable file input during recording
+            } catch (err) {
+                showError("Could not access microphone. Please grant permission.");
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+            recordButton.classList.remove('hidden');
+            stopButton.classList.add('hidden');
+            fileInput.disabled = false;
+        });
+
+        // --- MODIFIED: Submit Logic ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            let hasMedia = false;
+
+            if (audioBlob) {
+                // User recorded audio
+                formData.append('audio_blob', audioBlob, 'recording.webm');
+                hasMedia = true;
+            } else if (fileInput.files.length > 0) {
+                // User uploaded a file
+                // FormData automatically includes the file from 'fileInput'
+                hasMedia = true;
+            }
+
+            if (!hasMedia) {
+                showError("Please upload a file or record audio.");
+                return;
+            }
+
+            showProcessing("Uploading file...");
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Unknown error occurred.');
+                }
+
+                if (data.status === 'processing_started') {
+                    showProcessing("File uploaded. Processing has started...");
+                    pollInterval = setInterval(pollStatus, 3000); // Poll every 3 seconds
+                } else {
+                    throw new Error(data.error || 'Failed to start processing.');
+                }
+
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        async function pollStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                if (data.status === 'complete') {
+                    clearInterval(pollInterval);
+                    showComplete(data.output_file);
+                } else if (data.status === 'error') {
+                    clearInterval(pollInterval);
+                    showError(data.message);
+                } else {
+                    statusMessage.textContent = data.message || 'Processing...';
+                }
+            } catch (error) {
+                clearInterval(pollInterval);
+                showError('Failed to get status. Please check the server.');
+            }
+        }
+
+        function showProcessing(message) {
+            form.classList.add('hidden');
+            statusContainer.classList.remove('hidden');
+            spinner.classList.remove('hidden');
+            resultVideoContainer.classList.add('hidden');
+            resultDownloadContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            resetButton.classList.add('hidden');
+            statusMessage.textContent = message;
+        }
+
+        function showComplete(filename) {
+            spinner.classList.add('hidden');
+            statusMessage.textContent = 'Processing Complete!';
+            
+            // <<< MODIFIED: Embed video
+            resultVideo.src = `/serve_video/${filename}`;
+            resultVideoContainer.classList.remove('hidden');
+            
+            downloadLink.href = `/download/${filename}`;
+            downloadLink.download = filename;
+            resultDownloadContainer.classList.remove('hidden');
+            
+            resetButton.classList.remove('hidden'); // <<< Show reset button
+            submitButton.disabled = false;
+        }
+
+        function showError(message) {
+            form.classList.add('hidden');
+            statusContainer.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            resultVideoContainer.classList.add('hidden');
+            resultDownloadContainer.classList.add('hidden');
+            errorMessage.textContent = message;
+            errorContainer.classList.remove('hidden');
+            resetButton.classList.remove('hidden'); // <<< Show reset button
+            submitButton.disabled = false;
+        }
+        
+        // <<< MODIFIED: Reset button logic
+        resetButton.addEventListener('click', () => {
+            form.classList.remove('hidden');
+            statusContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            resultVideoContainer.classList.add('hidden');
+            resultDownloadContainer.classList.add('hidden');
+            
+            // Clear inputs
+            fileInput.value = '';
+            fileInput.disabled = false;
+            audioBlob = null;
+            recordSuccess.classList.add('hidden');
+            
+            // Reset video src
+            resultVideo.src = '';
+        });
+
+    </script>
+</body>
+</html>
