@@ -1,173 +1,132 @@
 import os
-import threading
 import uuid
-from flask import Flask, request, jsonify, render_template, send_from_directory
+import threading
+from flask import Flask, request, render_template, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
+
+# Import your existing pipeline and config
+import pipeline
 import config
-from pipeline import run_pipeline # This imports your pipeline.py
-
-# --- Configuration ---
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'outputs'
-
-# <<< FIX: Normalize all extensions to be dot-less
-# This cleans up the inconsistent list from config.py (e.g., '.mp4' and 'flac')
-def get_allowed_extensions():
-    video_exts = set(ext.lstrip('.') for ext in config.VIDEO_EXTENSIONS)
-    audio_exts = set(ext.lstrip('.') for ext in config.AUDIO_EXTENSIONS)
-    return video_exts | audio_exts
-
-ALLOWED_EXTENSIONS = get_allowed_extensions()
-
-# <<< NEW: Add audio formats our recorder will use
-ALLOWED_EXTENSIONS.add("webm")
-ALLOWED_EXTENSIONS.add("mp4") # Add mp4 here as well for audio
-ALLOWED_EXTENSIONS.add("mp3")
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 500 # 500 MB upload limit
+app.config['UPLOAD_FOLDER'] = config.UPLOADS_DIR
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB max upload size
 
-# --- Global Status Object ---
-# This is a simple, in-memory "database" to track our single task
-task_status = {
-    "status": "idle",  # idle, processing, complete, error
-    "message": "Waiting for a file.",
-    "output_file": None
-}
+# --- Task Status Database (In-Memory) ---
+TASK_STATUS = {}
 
-def allowed_file(filename):
-    # <<< FIX: Check if the dot-less extension is in our normalized set
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def is_allowed_file(filename):
+    """Checks if the file's extension is allowed."""
+    if '.' not in filename:
+        return False
+    # Get the full extension, including the dot (e.g., '.mp4')
+    ext = os.path.splitext(filename)[1].lower() 
+    allowed_extensions = set(config.VIDEO_EXTENSIONS) | set(config.AUDIO_EXTENSIONS)
+    return ext in allowed_extensions
 
-def run_pipeline_in_background(input_path, output_name, options):
+# --- FIX: New helper function to check if it's a video extension ---
+def is_video_file(filename):
+    """Checks if the file extension is in the VIDEO_EXTENSIONS list."""
+    if '.' not in filename:
+        return False
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in set(config.VIDEO_EXTENSIONS)
+# --- End of new helper function ---
+
+def start_processing_thread(task_id, input_path, output_path, options):
     """
-    A wrapper function to run our heavy pipeline in a separate thread
-    and update the global status object.
+    This function runs in a separate thread to avoid blocking the web server.
     """
-    global task_status
+    def log_callback(message):
+        print(f"[Task {task_id}]: {message}") 
+        if task_id in TASK_STATUS:
+            TASK_STATUS[task_id]["log"].append(message)
+    
     try:
-        final_file_path = run_pipeline(input_path, output_name, options)
-        task_status = {
-            "status": "complete",
-            "message": "Processing complete!",
-            "output_file": os.path.basename(final_file_path)
-        }
+        pipeline.run_pipeline(input_path, output_path, options, log_callback)
+        TASK_STATUS[task_id]["status"] = "Complete"
+        TASK_STATUS[task_id]["file"] = os.path.basename(output_path)
+        log_callback("Processing complete.")
+        
     except Exception as e:
-        task_status = {
-            "status": "error",
-            "message": f"An error occurred: {str(e)}",
-            "output_file": None
-        }
-    finally:
-        # Clean up the original upload file after processing
-        if os.path.exists(input_path):
-            os.remove(input_path)
-        print(f"Cleaned up temporary upload: {input_path}")
-
-
-# --- API Endpoints ---
+        error_message = f"Error during processing: {e}"
+        print(error_message)
+        if task_id in TASK_STATUS:
+            TASK_STATUS[task_id]["status"] = "Error"
+            TASK_STATUS[task_id]["log"].append(error_message)
 
 @app.route('/')
 def index():
-    """Serves the main HTML page."""
-    # Reset status on main page load
-    global task_status
-    if task_status["status"] != "processing":
-         task_status = {"status": "idle", "message": "Waiting for a file.", "output_file": None}
-    # Flask automatically looks in the 'templates' folder for this file
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """
-    Handles the file upload OR audio blob and starts the background processing thread.
-    """
-    global task_status
-    if task_status["status"] == "processing":
-        return jsonify({"error": "Server is already processing a file. Please wait."}), 429
+    if 'file' not in request.files and 'audio_blob' not in request.files:
+        return jsonify({"error": "No file part"}), 400
 
-    file = None
-    original_filename = None
-
-    # <<< NEW: Check for audio blob OR file upload
-    if 'audio_blob' in request.files:
-        file = request.files['audio_blob']
-        original_filename = "audio_recording.webm" # Give it a default name
-        print("Received audio blob.")
-    elif 'file' in request.files:
-        file = request.files['file']
-        original_filename = file.filename
-        print(f"Received file: {original_filename}")
-    else:
-        return jsonify({"error": "No file part or audio blob"}), 400
+    file = request.files.get('file') or request.files.get('audio_blob')
     
-    if original_filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    if not file.filename:
+         if 'audio_blob' in request.files:
+             file.filename = 'audio_recording.wav' 
+         else:
+              return jsonify({"error": "No file selected or recorded"}), 400
 
-    if file and allowed_file(original_filename):
-        # Use a unique ID for the filename to prevent conflicts
-        secure_name = secure_filename(original_filename)
-        file_ext = os.path.splitext(secure_name)[1]
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
+    if file and is_allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        input_file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(input_file_path)
-        print(f"Saved temporary file to: {input_file_path}")
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        file.save(input_path)
 
-        # --- Get options from the form ---
-        base_name = os.path.splitext(secure_name)[0]
-        output_file_name = f"{base_name}_lyrics.mp4"
-        
-        # <<< FIX: Check extension against normalized list
-        is_video = file_ext.lower().lstrip('.') in (set(ext.lstrip('.') for ext in config.VIDEO_EXTENSIONS))
-
-        # If it's a recording, it's definitely not a video
-        if 'audio_blob' in request.files:
-            is_video = False
+        # --- FIX: Determine if it's a video file ---
+        is_video = is_video_file(filename)
 
         options = {
-            "model": request.form.get("model", "small.en"),
-            "wipe_text": request.form.get("wipe_text") == "on",
-            "separate_vocals": request.form.get("separate_vocals") == "on",
-            "is_video": is_video
+            "model_size": request.form.get('model_size', config.WHISPER_MODEL),
+            "do_wipe_text": request.form.get('do_wipe_text') == 'on',
+            "do_separate_vocals": request.form.get('do_separate_vocals') == 'on',
+            "is_video": is_video # <<< Pass the boolean here
         }
-        
-        # --- Start the background thread ---
-        task_status = {"status": "processing", "message": "Processing... This may take a while.", "output_file": None}
-        
-        thread = threading.Thread(
-            target=run_pipeline_in_background,
-            args=(input_file_path, output_file_name, options)
-        )
-        thread.start()
-        
-        return jsonify({"status": "processing_started", "message": "Processing started..."})
-    else:
-        # <<< FIX: Provide a more helpful error message
-        return jsonify({"error": f"File type not allowed. Allowed types are: {list(ALLOWED_EXTENSIONS)}"}), 400
 
-@app.route('/status')
-def get_status():
-    """A polling endpoint for the client to check the task status."""
-    global task_status
-    return jsonify(task_status)
+        task_id = str(uuid.uuid4())
+        base_name = os.path.splitext(filename)[0]
+        output_filename = f"{base_name}_lyrics.mp4"
+        
+        os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
+        output_path = os.path.join(config.OUTPUTS_DIR, output_filename)
+
+        TASK_STATUS[task_id] = {
+            "status": "Processing...",
+            "log": ["Task started. File saved."] 
+        }
+
+        threading.Thread(
+            target=start_processing_thread,
+            args=(task_id, input_path, output_path, options)
+        ).start()
+
+        return jsonify({"status": "Processing started", "task_id": task_id})
+    elif not file:
+         return jsonify({"error": "No file selected or recorded"}), 400
+    else: 
+         return jsonify({"error": f"File type '{os.path.splitext(file.filename)[1]}' not allowed"}), 400
+
+
+@app.route('/status/<task_id>')
+def get_status(task_id):
+    status = TASK_STATUS.get(task_id, {"status": "Not Found", "log": []})
+    return jsonify(status)
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    """Serves the final processed video file for download."""
-    return send_from_directory(app.config['OUTPUT_FOLDER'], filename, as_attachment=True)
+    return send_from_directory(config.OUTPUTS_DIR, filename, as_attachment=True)
 
-# <<< NEW: Add a route to *serve* the video for embedding >>>
 @app.route('/serve_video/<filename>')
 def serve_video(filename):
-    """Serves the final processed video file for embedding."""
-    print(f"Serving video file: {filename}")
-    return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
+    return send_from_directory(config.OUTPUTS_DIR, filename, as_attachment=False)
 
 if __name__ == '__main__':
-    # This makes the app runnable with `python app.py`
-    app.run(debug=True, host='0.0.0.0', port=5001)
-
+    os.makedirs(config.UPLOADS_DIR, exist_ok=True)
+    os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
+    app.run(debug=True, port=5001)

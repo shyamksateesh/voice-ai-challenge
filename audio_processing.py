@@ -1,90 +1,96 @@
 import os
-from pydub import AudioSegment # type: ignore
-import subprocess # <<< ADD THIS
-import shutil # <<< ADD THIS
+import subprocess
+import shutil
+from pydub import AudioSegment
+import config
 
-def extract_audio(input_path, wav_path):
+def extract_audio(input_path, wav_path, log_callback):
     """
     Extracts audio, standardizes it to 16kHz mono for Whisper,
     and saves it as a temporary WAV file.
     """
     try:
-        print(f"Extracting audio from '{os.path.basename(input_path)}'...")
+        log_callback(f"Extracting audio from '{os.path.basename(input_path)}'...")
         audio = AudioSegment.from_file(input_path)
-        audio = audio.set_channels(1).set_frame_rate(16000) 
+        audio = audio.set_channels(1).set_frame_rate(16000)
         audio.export(wav_path, format="wav")
-        print(f"Temporary WAV file created at '{wav_path}'.")
-        return True
+        log_callback(f"Temporary WAV file created at '{wav_path}'.")
+        return wav_path
     except Exception as e:
-        print(f"Error during audio extraction: {e}")
-        return False
+        log_callback(f"Error during audio extraction: {e}")
+        return None
 
-# -----------------------------------------------------------------
-# --- NEW VOCAL SEPARATION FUNCTION (Add everything below) ---
-# -----------------------------------------------------------------
-def separate_vocals(input_audio_path, output_vocals_path):
+def separate_vocals(audio_path, log_callback):
     """
     Uses Demucs to separate vocals from an audio file.
-    Saves the output to the specified path.
-    Returns True on success, False on failure.
+    Returns the path to the separated vocals file, or None on failure.
     """
-    print("Starting vocal separation with Demucs (this will take a while)...")
-    
-    # Define a temporary output directory for Demucs
-    temp_output_dir = "temp_demucs_output"
-    
+    output_dir = "temp_demucs_output"
     try:
-        # We use subprocess to call the `demucs` command.
-        # This is more stable than importing it as a library.
-        # -n htdemucs_ft: A good, fast model.
-        # --two-stems=vocals: Tells it to only save the vocals.
+        log_callback("Starting vocal separation with Demucs (this will take a while)...")
+        
+        # Build the command to run Demucs
         command = [
             "python", "-m", "demucs.separate",
             "-n", "htdemucs_ft",
             "--two-stems=vocals",
-            "-o", temp_output_dir,
-            input_audio_path
+            "-o", output_dir,
+            audio_path
         ]
         
-        subprocess.run(command, check=True, capture_output=True, text=True)
+        # Run the command
+        # We capture stdout/stderr to log it, but Demucs' progress bars
+        # will still print to the console, which is fine.
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        
+        # Log Demucs output (useful for debugging)
+        if result.stdout:
+            log_callback("Demucs STDOUT: " + result.stdout)
+        if result.stderr:
+            log_callback("Demucs STDERR: " + result.stderr)
 
-        # --- Find the created vocal file ---
-        # Demucs creates a nested folder structure, e.g.:
+        # --- Find the separated vocal file ---
+        # Demucs creates a nested folder structure, e.g.,
         # temp_demucs_output/htdemucs_ft/temp_audio/vocals.wav
         
-        # Get the model name used (e.g., 'htdemucs_ft')
-        model_name = "htdemucs_ft" 
-        # Get the audio file's base name (e.g., 'temp_audio')
-        audio_basename = os.path.splitext(os.path.basename(input_audio_path))[0]
+        # Find the model-named folder (e.g., 'htdemucs_ft')
+        model_output_dir = os.path.join(output_dir, "htdemucs_ft")
+        if not os.path.exists(model_output_dir):
+             model_output_dir = os.path.join(output_dir, "htdemucs") # Fallback for older demucs
+             if not os.path.exists(model_output_dir):
+                 raise Exception("Could not find Demucs output model folder.")
         
-        # Construct the expected path
-        generated_vocal_path = os.path.join(temp_output_dir, model_name, audio_basename, "vocals.wav")
+        # Find the track-named folder (e.g., 'temp_audio')
+        track_name = os.path.splitext(os.path.basename(audio_path))[0]
+        vocal_file_dir = os.path.join(model_output_dir, track_name)
+        vocal_file_path = os.path.join(vocal_file_dir, "vocals.wav")
 
-        if os.path.exists(generated_vocal_path):
-            # Move the vocal file to our desired output path
-            shutil.move(generated_vocal_path, output_vocals_path)
-            print(f"Vocal separation successful. Vocals saved to: {output_vocals_path}")
-            return True
-        else:
-            print(f"Error: Demucs ran, but the vocal file was not found at {generated_vocal_path}")
-            return False
+        if not os.path.exists(vocal_file_path):
+            raise Exception(f"Could not find 'vocals.wav' in {vocal_file_dir}")
+
+        # --- Move the file and clean up ---
+        final_vocal_path = os.path.join(config.UPLOADS_DIR, "vocals_only.wav")
+        shutil.move(vocal_file_path, final_vocal_path)
+        log_callback(f"Successfully separated vocals: {final_vocal_path}")
+        
+        return final_vocal_path
 
     except subprocess.CalledProcessError as e:
-        print("--- DEMUCS FAILED ---")
-        print(f"Error during vocal separation: {e}")
-        print("STDOUT:", e.stdout)
-        print("STDERR:", e.stderr)
-        print("Please ensure 'demucs' is installed (`pip install demucs`) and that you have enough RAM.")
-        return False
+        log_callback("--- DEMUCS FAILED ---")
+        log_callback(f"Error during vocal separation: {e}")
+        log_callback(f"STDOUT: {e.stdout}")
+        log_callback(f"STDERR: {e.stderr}")
+        log_callback("Please ensure 'demucs' is installed (`pip install demucs`) and that you have enough RAM.")
+        return None
     except Exception as e:
-        print(f"An unexpected error occurred during separation: {e}")
-        return False
+        log_callback(f"--- DEMUCS FAILED (Post-processing) ---")
+        log_callback(f"Error finding/moving Demucs output: {e}")
+        return None
     finally:
-        # --- Cleanup ---
-        # Delete the temporary demucs output folder
-        if os.path.exists(temp_output_dir):
+        # Clean up the entire demucs output directory
+        if os.path.exists(output_dir):
             try:
-                shutil.rmtree(temp_output_dir)
-                print(f"Cleaned up temporary directory: {temp_output_dir}")
+                shutil.rmtree(output_dir)
+                log_callback(f"Cleaned up temporary directory: {output_dir}")
             except Exception as e:
-                print(f"Warning: Could not clean up {temp_output_dir}. Error: {e}")
+                log_callback(f"Warning: Could not clean up {output_dir}. Error: {e}")
