@@ -3,355 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lyric Agent</title>
+    <title>LyrAssist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .card {
-            background-color: #1a1a1e;
-            border: 1px solid #323238;
-            color: #e1e1e6;
+        .log-entry {
+            padding: 2px 0;
+            font-size: 0.8rem;
+            color: #9ca3af; /* gray-400 */
+            border-bottom: 1px dashed #374151; /* gray-700 */
         }
-        .btn {
-            background-color: #5136f4;
-            color: white;
-            transition: background-color 0.3s;
+        .log-container {
+             max-height: 200px;
+             overflow-y: auto;
+             background-color: #030712; /* gray-950 */
+             border-radius: 0.375rem; /* rounded-md */
+             padding: 0.5rem; /* p-2 */
+             margin-top: 0.5rem; /* mt-2 */
         }
-        .btn:hover { background-color: #6a4ff7; }
-        .btn-secondary {
-            background-color: #323238;
-            color: #e1e1e6;
-        }
-        .btn-secondary:hover { background-color: #44444a; }
-        .btn-record {
-            background-color: #e53e3e;
-            color: white;
-        }
-        .btn-record.recording {
-            background-color: #c53030;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .form-checkbox {
-            background-color: #323238;
-            border-color: #44444a;
-        }
-        .form-checkbox:checked {
-            background-color: #5136f4;
-            border-color: #5136f4;
-        }
-        /* Style for the new log output */
-        #log-output {
-            background-color: #0f0f11;
-            border: 1px solid #323238;
-            color: #a0a0a5;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.875rem;
-            height: 200px;
-            overflow-y: auto;
-            padding: 12px;
-            border-radius: 8px;
-            white-space: pre-wrap; /* Wrap long lines */
-            word-break: break-all;
-            margin-top: 16px;
+        /* Darker scrollbar */
+        .log-container::-webkit-scrollbar { width: 8px; }
+        .log-container::-webkit-scrollbar-track { background: #111827; /* gray-900 */ }
+        .log-container::-webkit-scrollbar-thumb { background: #374151; /* gray-700 */ border-radius: 4px;}
+        .log-container::-webkit-scrollbar-thumb:hover { background: #4b5563; /* gray-600 */ }
+
+        /* Style for disabled option */
+        .disabled-option label, .disabled-option input {
+             opacity: 0.4;
+             cursor: not-allowed;
         }
     </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-black text-gray-200 flex items-center justify-center min-h-screen">
+<body class="bg-black text-gray-200 flex items-center justify-center min-h-screen"> <!-- Changed bg to black, text lighter gray -->
 
-    <div class="card w-full max-w-lg p-8 rounded-xl shadow-lg">
-        
-        <!-- === Form View === -->
-        <div id="form-view">
-            <h1 class="text-3xl font-bold text-center mb-6">Lyric Agent</h1>
-            
-            <form id="upload-form" class="space-y-6">
-                
-                <!-- File Upload -->
-                <div>
-                    <label for="file-upload" class="block text-sm font-medium text-gray-400 mb-2">Upload Media File</label>
-                    <input id="file-upload" name="file" type="file" class="block w-full text-sm text-gray-400
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-lg file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-purple-700 file:text-white
-                        hover:file:bg-purple-600" accept="video/*,audio/*">
-                </div>
+    <div id="upload-section" class="bg-gray-900 p-8 rounded-lg shadow-xl w-full max-w-md"> <!-- Changed bg to gray-900 -->
+        <!-- Title and Subtitle -->
+        <h1 class="text-4xl font-bold mb-2 text-center text-indigo-400">LyrAssist</h1>
+        <p class="text-sm text-gray-400 mb-6 text-center">Lyric Agent for Hiya Innovation Challenge</p>
 
-                <!-- OR Separator -->
+        <form id="upload-form" class="space-y-4">
+            <div>
+                <label for="file" class="block text-sm font-medium text-gray-300 mb-1">Upload Media File:</label>
+                <input type="file" id="file" name="file" accept="video/*,audio/*" class="block w-full text-sm text-gray-400
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-indigo-600 file:text-white <!-- Slightly darker button -->
+                    hover:file:bg-indigo-700 cursor-pointer">
+            </div>
+
+             <div class="text-center text-gray-600 my-2">OR</div> <!-- Darker OR -->
+
+            <div>
+                 <label class="block text-sm font-medium text-gray-300 mb-1">Record Audio:</label>
+                 <div class="flex space-x-2">
+                     <button type="button" id="startRecord" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Start Recording</button>
+                     <button type="button" id="stopRecord" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out" disabled>Stop Recording</button>
+                 </div>
+                 <div id="recordingStatus" class="text-sm text-gray-500 mt-2 h-4"></div> <!-- Darker status text -->
+                 <audio id="audioPlayback" controls class="w-full mt-2 hidden"></audio>
+            </div>
+
+            <div class="pt-4 space-y-3">
+                 <h2 class="text-lg font-semibold text-gray-100 border-b border-gray-700 pb-1 mb-2">Processing Options</h2> <!-- Lighter heading -->
                 <div class="flex items-center">
-                    <div class="flex-grow border-t border-gray-700"></div>
-                    <span class="flex-shrink mx-4 text-gray-500">OR</span>
-                    <div class="flex-grow border-t border-gray-700"></div>
+                    <input type="checkbox" id="do_separate_vocals" name="do_separate_vocals" class="h-4 w-4 text-indigo-500 border-gray-700 rounded focus:ring-indigo-500">
+                    <label for="do_separate_vocals" class="ml-2 block text-sm text-gray-300">Separate Vocals (Slow)</label>
                 </div>
 
-                <!-- Audio Recording -->
+                <!-- Greying out Wipe Text Option -->
+                <div class="flex items-center disabled-option" title="Karaoke wipe effect is currently experimental and very slow.">
+                    <input type="checkbox" id="do_wipe_text" name="do_wipe_text" class="h-4 w-4 text-indigo-500 border-gray-700 rounded focus:ring-indigo-500" disabled>
+                    <label for="do_wipe_text" class="ml-2 block text-sm text-gray-300">Generate Karaoke Wipe (Experimental - Disabled)</label>
+                </div>
+                <!-- End Grey Out -->
+
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Record Audio</label>
-                    <div class="flex space-x-4">
-                        <button type="button" id="record-btn" class="btn-record w-full py-2 px-4 rounded-lg font-semibold">Start Recording</button>
-                        <button type="button" id="stop-btn" class="btn-secondary w-full py-2 px-4 rounded-lg font-semibold" disabled>Stop</button>
-                    </div>
-                    <audio id="audio-playback" controls class="w-full mt-4 hidden"></audio>
+                     <label for="model_size" class="block text-sm font-medium text-gray-300">Whisper Model:</label>
+                     <select id="model_size" name="model_size" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-800 border-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md text-gray-200"> <!-- Darker select bg -->
+                         <option value="tiny.en">Tiny (Fastest)</option>
+                         <option value="base.en">Base</option>
+                         <option value="small.en">Small</option>
+                         <option value="medium.en" selected>Medium (More Accurate)</option> <!-- Default changed -->
+                         <!-- Large model removed -->
+                     </select>
                 </div>
-                
-                <!-- AI Options -->
-                <div class="border-t border-gray-700 pt-6 space-y-4">
-                    <h3 class="text-lg font-semibold">Processing Options</h3>
-                    
-                    <div class="flex items-center justify-between">
-                        <label for="model_size" class="text-sm font-medium text-gray-400">Whisper Model</label>
-                        <select id="model_size" name="model_size" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-                            <option value="small.en">Small (Fast)</option>
-                            <option value="medium.en" selected>Medium (Balanced)</option>
-                            <option value="large">Large (Accurate)</option>
-                        </select>
-                    </div>
+            </div>
 
-                    <div class="relative flex items-start">
-                        <div class="flex items-center h-5">
-                            <input id="do_separate_vocals" name="do_separate_vocals" type="checkbox" class="form-checkbox h-4 w-4 text-purple-600 rounded">
-                        </div>
-                        <div class="ml-3 text-sm">
-                            <label for="do_separate_vocals" class="font-medium">Separate Vocals (Slow)</label>
-                            <p class="text-gray-500 text-xs">Use Demucs to isolate vocals before transcribing.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="relative flex items-start">
-                        <div class="flex items-center h-5">
-                            <input id="do_wipe_text" name="do_wipe_text" type="checkbox" class="form-checkbox h-4 w-4 text-purple-600 rounded">
-                        </div>
-                        <div class="ml-3 text-sm">
-                            <label for="do_wipe_text" class="font-medium">Karaoke "Wipe" (Very Slow)</label>
-                            <p class="text-gray-500 text-xs">Generate a word-by-word karaoke-style video.</p>
-                        </div>
-                    </div>
-                </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+                Start Processing
+            </button>
+        </form>
+    </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn w-full py-3 px-4 rounded-lg font-bold text-lg">
-                    Start Processing
-                </button>
-            </form>
+    <div id="status-section" class="bg-gray-900 p-8 rounded-lg shadow-xl w-full max-w-lg hidden"> <!-- Changed bg to gray-900 -->
+         <!-- Title and Subtitle -->
+        <h1 class="text-3xl font-bold mb-1 text-center text-indigo-400">LyrAssist</h1>
+        <p class="text-xs text-gray-500 mb-4 text-center">Processing Status</p>
+
+        <div id="status-message" class="text-center text-lg mb-4">Initializing...</div>
+
+        <div class="mb-4">
+             <label class="block text-sm font-medium text-gray-400 mb-1">Live Log:</label>
+             <div id="log-output" class="log-container">
+                 <div class="log-entry">Waiting for logs...</div>
+             </div>
         </div>
 
-        <!-- === Status View === -->
-        <div id="status-view" class="hidden text-center">
-            <h1 class="text-3xl font-bold mb-6">Processing...</h1>
-            <p id="status-message" class="text-lg text-purple-400 mb-4">Initializing task...</p>
-            
-            <!-- Spinning Loader -->
-            <div id="loader" class="flex justify-center items-center my-8">
-                <svg class="animate-spin h-10 w-10 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-
-            <!-- Log Output -->
-            <pre id="log-output"></pre>
-            
-            <!-- Result Area -->
-            <div id="result" class="hidden mt-6">
-                <h2 class="text-2xl font-bold mb-4">Processing Complete!</h2>
-                <video id="video-player" class="w-full rounded-lg border border-gray-700" controls>
-                    <!-- Video source will be set by JS -->
-                </video>
-                <div class="flex space-x-4 mt-4">
-                    <a id="download-link" href="#" class="btn w-full py-3 px-4 rounded-lg font-semibold">Download Video</a>
-                    <button id="restart-btn" type="button" class="btn-secondary w-full py-3 px-4 rounded-lg font-semibold">Process Another</button>
-                </div>
-            </div>
-
-            <!-- Error Area -->
-            <div id="error" class="hidden mt-6 text-red-400">
-                <h2 class="text-2xl font-bold mb-4">An Error Occurred</h2>
-                <p id="error-message" class="mb-4"></p>
-                <button id="restart-btn-error" type="button" class="btn-secondary w-full py-3 px-4 rounded-lg font-semibold">Try Again</button>
-            </div>
+        <div id="video-section" class="mt-6 hidden">
+             <h2 class="text-xl font-semibold mb-2 text-center text-indigo-300">Result</h2>
+             <video id="result-video" controls class="w-full rounded-lg shadow-md bg-black" style="max-height: 50vh;"></video> <!-- Added bg-black to video player -->
+             <div class="flex justify-center space-x-4 mt-4">
+                 <a id="download-link" href="#" download class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download Video</a>
+                 <button id="process-another" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Process Another File</button>
+             </div>
         </div>
+
+         <div id="error-message" class="mt-4 text-center text-red-500 hidden"></div> <!-- Brighter red for dark bg -->
+         <div id="error-actions" class="text-center mt-4 hidden">
+              <button id="process-another-error" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Process Another File</button>
+         </div>
     </div>
 
     <script>
-        const formView = document.getElementById('form-view');
-        const statusView = document.getElementById('status-view');
+        // Javascript remains unchanged
         const uploadForm = document.getElementById('upload-form');
-        
+        const uploadSection = document.getElementById('upload-section');
+        const statusSection = document.getElementById('status-section');
         const statusMessage = document.getElementById('status-message');
-        const loader = document.getElementById('loader');
-        const logOutput = document.getElementById('log-output'); // <-- Get the log element
-        
-        const resultDiv = document.getElementById('result');
-        const errorDiv = document.getElementById('error');
-        const errorMessage = document.getElementById('error-message');
-        
-        const videoPlayer = document.getElementById('video-player');
+        const logOutput = document.getElementById('log-output');
+        const videoSection = document.getElementById('video-section');
+        const resultVideo = document.getElementById('result-video');
         const downloadLink = document.getElementById('download-link');
-        const restartBtn = document.getElementById('restart-btn');
-        const restartBtnError = document.getElementById('restart-btn-error');
-        
+        const processAnotherButton = document.getElementById('process-another');
+        const processAnotherErrorButton = document.getElementById('process-another-error');
+        const errorMessageDiv = document.getElementById('error-message');
+        const errorActionsDiv = document.getElementById('error-actions');
+
+        let intervalId = null;
+        let lastLogCount = 0;
+
         // --- Audio Recording ---
-        const recordBtn = document.getElementById('record-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const audioPlayback = document.getElementById('audio-playback');
-        let mediaRecorder;
-        let audioChunks = [];
-        let recordedBlob = null;
+         const startRecordButton = document.getElementById('startRecord');
+         const stopRecordButton = document.getElementById('stopRecord');
+         const recordingStatus = document.getElementById('recordingStatus');
+         const audioPlayback = document.getElementById('audioPlayback');
+         let mediaRecorder;
+         let audioChunks = [];
+         let recordedBlob = null;
 
-        recordBtn.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => {
-                    audioChunks.push(e.data);
-                };
-                mediaRecorder.onstop = () => {
-                    recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const audioUrl = URL.createObjectURL(recordedBlob);
-                    audioPlayback.src = audioUrl;
-                    audioPlayback.classList.remove('hidden');
-                    audioChunks = [];
-                };
-                mediaRecorder.start();
-                recordBtn.textContent = 'Recording...';
-                recordBtn.classList.add('recording');
-                stopBtn.disabled = false;
-                recordBtn.disabled = true;
-            } catch (err) {
-                console.error('Error starting recording:', err);
-                alert('Could not start recording. Please ensure you have given microphone permission.');
-            }
-        };
+         startRecordButton.onclick = async () => {
+             try {
+                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                 mediaRecorder = new MediaRecorder(stream);
+                 audioChunks = [];
+                 recordedBlob = null;
 
-        stopBtn.onclick = () => {
-            mediaRecorder.stop();
-            recordBtn.textContent = 'Start Recording';
-            recordBtn.classList.remove('recording');
-            stopBtn.disabled = true;
-            recordBtn.disabled = false;
-        };
-        
-        // --- Form Submission ---
-        uploadForm.onsubmit = async (e) => {
-            e.preventDefault();
-            
+                 mediaRecorder.ondataavailable = event => {
+                     audioChunks.push(event.data);
+                 };
+
+                 mediaRecorder.onstop = () => {
+                     recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                     const audioUrl = URL.createObjectURL(recordedBlob);
+                     audioPlayback.src = audioUrl;
+                     audioPlayback.classList.remove('hidden');
+                     recordingStatus.textContent = 'Recording stopped. Ready to upload.';
+                     stopRecordButton.disabled = true;
+                     startRecordButton.disabled = false;
+                 };
+
+                 mediaRecorder.start();
+                 recordingStatus.textContent = 'Recording...';
+                 startRecordButton.disabled = true;
+                 stopRecordButton.disabled = false;
+                 audioPlayback.classList.add('hidden');
+                 document.getElementById('file').value = ''; // Clear file input if recording starts
+
+             } catch (err) {
+                 console.error("Error accessing microphone:", err);
+                 recordingStatus.textContent = 'Error: Could not access microphone.';
+             }
+         };
+
+         stopRecordButton.onclick = () => {
+             if (mediaRecorder && mediaRecorder.state === "recording") {
+                 mediaRecorder.stop();
+             }
+         };
+         // --- End Audio Recording ---
+
+
+        uploadForm.onsubmit = async (event) => {
+            event.preventDefault();
+
             const formData = new FormData(uploadForm);
-            const fileInput = document.getElementById('file-upload');
-            
-            // Check if we are using the recorded audio
-            if (recordedBlob && fileInput.files.length === 0) {
-                formData.append('audio_blob', recordedBlob, 'audio_recording.wav');
-                formData.delete('file'); // Remove empty file field
-            } else if (fileInput.files.length === 0 && !recordedBlob) {
-                alert('Please select a file or record audio first.');
-                return;
-            }
-            
-            formView.classList.add('hidden');
-            statusView.classList.remove('hidden');
-            statusMessage.textContent = 'Uploading file...';
-            logOutput.textContent = ''; // Clear log
+            const fileInput = document.getElementById('file');
 
+             if (recordedBlob && !fileInput.files.length) {
+                 formData.delete('file'); // Ensure file input is ignored if blob exists
+                 formData.append('audio_blob', recordedBlob, 'audio_recording.wav');
+                 console.log("Using recorded audio blob.");
+             } else if (fileInput.files.length) {
+                 formData.delete('audio_blob'); // Ensure blob is ignored if file exists
+                 console.log("Using uploaded file.");
+                 // Clear recording state if a file is chosen
+                 recordedBlob = null;
+                 audioPlayback.classList.add('hidden');
+                 recordingStatus.textContent = '';
+             } else {
+                 alert("Please select a file or record audio first.");
+                 return;
+             }
+
+            // --- UI Updates ---
+            uploadSection.classList.add('hidden');
+            statusSection.classList.remove('hidden');
+            statusMessage.textContent = 'Uploading file...';
+            logOutput.innerHTML = '<div class="log-entry">Initiating upload...</div>'; // Clear previous logs
+            lastLogCount = 0; // Reset log count
+            videoSection.classList.add('hidden'); // Hide results area
+            errorMessageDiv.classList.add('hidden');
+            errorActionsDiv.classList.add('hidden');
+
+            // --- API Call ---
             try {
                 const response = await fetch('/upload', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
                 });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Unknown error occurred');
+
+                const result = await response.json();
+
+                if (response.ok && result.task_id) {
+                    statusMessage.textContent = 'Processing started...';
+                    pollStatus(result.task_id);
+                } else {
+                    displayError(result.error || 'Upload failed. Please try again.');
                 }
-                
-                statusMessage.textContent = 'Processing...';
-                pollStatus(data.task_id);
-                
-            } catch (err) {
-                showError(err.message);
+            } catch (error) {
+                 console.error('Upload Error:', error);
+                displayError('Network error during upload. Please try again.');
             }
         };
-        
-        // --- Status Polling ---
+
         function pollStatus(taskId) {
-            const interval = setInterval(async () => {
+            // Clear any existing interval before starting a new one
+            if (intervalId) clearInterval(intervalId); 
+
+            intervalId = setInterval(async () => {
                 try {
                     const response = await fetch(`/status/${taskId}`);
+                    // Handle case where server restarts or task disappears
+                    if (!response.ok) {
+                         clearInterval(intervalId);
+                         displayError(`Error fetching status: ${response.statusText} (Task ID: ${taskId})`);
+                         return;
+                    }
                     const data = await response.json();
-                    
-                    // --- UPDATE LOG VIEW ---
-                    if (data.log) {
-                        logOutput.textContent = data.log.join('\n');
-                        logOutput.scrollTop = logOutput.scrollHeight; // Auto-scroll
+
+                    statusMessage.textContent = data.status || 'Checking status...';
+
+                    // Update logs only if new logs exist
+                    const currentLogs = data.log || [];
+                    if (currentLogs.length > lastLogCount) {
+                         // Append only new logs for better performance? Or replace all? Replace all is simpler.
+                         logOutput.innerHTML = currentLogs.map(log => `<div class="log-entry">${escapeHtml(log)}</div>`).join('');
+                         logOutput.scrollTop = logOutput.scrollHeight; // Auto-scroll to bottom
+                         lastLogCount = currentLogs.length;
                     }
 
-                    if (data.status === 'Processing...') {
-                        // Get the last log message as the status
-                        if (data.log && data.log.length > 0) {
-                            statusMessage.textContent = data.log[data.log.length - 1];
+
+                    if (data.status === 'Complete') {
+                        clearInterval(intervalId);
+                        statusMessage.textContent = 'Processing Complete!';
+                        if (data.file) {
+                             displayResults(data.file); // Pass filename, not full path
+                        } else {
+                             displayError("Processing finished, but no output file was generated.");
                         }
-                    } else if (data.status === 'Complete') {
-                        clearInterval(interval);
-                        showResult(data.file);
                     } else if (data.status === 'Error') {
-                        clearInterval(interval);
-                        showError(data.log.join('\n'));
+                        clearInterval(intervalId);
+                         // Try to get a more specific error from the log
+                         const lastErrorLog = currentLogs.length > 0 ? currentLogs[currentLogs.length - 1] : 'An unknown error occurred during processing.';
+                         displayError(lastErrorLog);
+                    } else if (data.status === 'Not Found') {
+                         clearInterval(intervalId);
+                         displayError("Task ID not found. The process may have been interrupted or the server restarted.");
                     }
-                    
-                } catch (err) {
-                    clearInterval(interval);
-                    showError('Failed to get status. Check server connection.');
+                    // Continue polling if status is 'Processing...' or similar
+                } catch (error) {
+                    clearInterval(intervalId);
+                     console.error('Polling Error:', error);
+                    displayError('Network error while checking status.');
                 }
             }, 3000); // Poll every 3 seconds
         }
-        
-        // --- UI State Changers ---
-        function showResult(filename) {
-            statusMessage.textContent = 'Processing Complete!';
-            loader.classList.add('hidden');
-            logOutput.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-            resultDiv.classList.remove('hidden');
-            
-            videoPlayer.src = `/serve_video/${filename}`;
+
+        function displayResults(filename) {
+            videoSection.classList.remove('hidden');
+            // Construct the correct URL for the video source
+            resultVideo.src = `/serve_video/${filename}`; 
+            // Construct the correct URL for the download link
             downloadLink.href = `/download/${filename}`;
+            downloadLink.download = filename; // Suggest filename for download
+            errorMessageDiv.classList.add('hidden');
+            errorActionsDiv.classList.add('hidden');
         }
-        
-        function showError(message) {
-            statusMessage.textContent = 'An Error Occurred';
-            loader.classList.add('hidden');
-            logOutput.classList.add('hidden');
-            resultDiv.classList.add('hidden');
-            errorDiv.classList.remove('hidden');
-            errorMessage.textContent = message;
+
+        function displayError(message) {
+             statusMessage.textContent = 'Error';
+             errorMessageDiv.textContent = `Error: ${escapeHtml(message)}`;
+             errorMessageDiv.classList.remove('hidden');
+             errorActionsDiv.classList.remove('hidden');
+             videoSection.classList.add('hidden'); // Hide results on error
         }
-        
+
         function resetUI() {
-            statusView.classList.add('hidden');
-            formView.classList.remove('hidden');
-            
-            // Clear form
-            uploadForm.reset();
-            recordedBlob = null;
-            audioPlayback.classList.add('hidden');
-            audioPlayback.src = '';
-            
-            // Reset status views
-            loader.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-            logOutput.classList.remove('hidden'); // Show log for next run
-            logOutput.textContent = '';
-            statusMessage.textContent = 'Initializing task...';
+            clearInterval(intervalId); // Stop polling if active
+            statusSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            uploadForm.reset(); // Clear form fields
+             // Reset recording state
+             recordedBlob = null;
+             audioChunks = [];
+             if (mediaRecorder && mediaRecorder.stream) {
+                 mediaRecorder.stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+             }
+             mediaRecorder = null;
+             audioPlayback.src = '';
+             audioPlayback.classList.add('hidden');
+             recordingStatus.textContent = '';
+             startRecordButton.disabled = false;
+             stopRecordButton.disabled = true;
+             lastLogCount = 0; // Reset log counter
         }
-        
-        restartBtn.onclick = resetUI;
-        restartBtnError.onclick = resetUI;
+
+        // Attach resetUI function to both buttons
+        processAnotherButton.onclick = resetUI;
+        processAnotherErrorButton.onclick = resetUI;
+
+         // Simple HTML escaping function
+         function escapeHtml(unsafe) {
+             if (typeof unsafe !== 'string') return unsafe; // Handle non-strings gracefully
+             return unsafe
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/'/g, "&#039;");
+         }
 
     </script>
 </body>
