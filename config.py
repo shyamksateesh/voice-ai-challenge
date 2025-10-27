@@ -1,26 +1,29 @@
-# --- Project Folders ---
+# -- Directories --
 UPLOADS_DIR = "uploads"
 OUTPUTS_DIR = "outputs"
+DEMUCS_OUTPUT_DIR = "temp_demucs_output" # For cleaning up Demucs temp files
 
-# --- AI Models ---
-WHISPER_MODEL = "medium.en"
+# -- Whisper Options --
+WHISPER_MODEL = "medium.en" # Default model
 
-# --- File Types ---
+# <<< FIX: Add back allowed file extensions >>>
 VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv']
-# <<< FIX: Added dot to flac
-AUDIO_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.flac'] 
+AUDIO_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.flac'] # Ensure .flac has the dot
 
-# --- Subtitle Style ---
-RELATIVE_FONT_SIZE = 0.045 # 4.5% of video width
+# -- Video Style Options --
+# For Phrase Video (generate_phrase_video)
+RELATIVE_FONT_SIZE = 0.045 # Relative to video width
 FONT_COLOR = 'white'
 FONT_FAMILY = 'Arial-Bold'
 FONT_BACKGROUND = 'rgba(0, 0, 0, 0.6)' # Semi-transparent black
-SUBTITLE_Y_POSITION = 0.85 # 85% from the top
+SUBTITLE_Y_POSITION = 0.85 # Relative Y position (0.0 top, 1.0 bottom)
 
-# --- Karaoke Style ---
-KARAOKE_FONT = "Courier-Bold" # Monospace font for wipe effect
-BG_COLOR = "gray30" # Color for un-highlighted text
+# For Karaoke Video (generate_karaoke_video)
+KARAOKE_FONT = "Courier-Bold" # MUST be monospace for wipe effect
+BG_COLOR = "gray30" # Added for karaoke base text
+# Karaoke uses fixed font size defined in video_processing.py based on width
 
-# --- Processing Options ---
-REPLACE_AUDIO_WITH_VOCALS = True # If True and separate_vocals runs, use vocal track
+# -- Pipeline Options --
+REPLACE_AUDIO_WITH_VOCALS = True # If True, use separated vocals in final video (requires --separate-vocals)
 
+# ACRCloud settings removed
