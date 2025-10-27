@@ -25,5 +25,3 @@ BG_COLOR = "gray30" # Added for karaoke base text
 
 # -- Pipeline Options --
 REPLACE_AUDIO_WITH_VOCALS = True # If True, use separated vocals in final video (requires --separate-vocals)
-
-# ACRCloud settings removed
