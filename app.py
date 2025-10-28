@@ -7,7 +7,6 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 from werkzeug.utils import secure_filename
 import config # Import config settings
 import pipeline # Import your main processing logic
-# Recognition import removed
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = config.UPLOADS_DIR

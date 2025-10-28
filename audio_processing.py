@@ -61,7 +61,7 @@ def separate_vocals(audio_path, log_callback):
                  raise Exception("Could not find Demucs output model folder.")
         
         # Find the track-named folder (e.g., 'temp_audio')
-        track_name = os.path.splitext(os.path.basename(audio_path))[0]
+        track_name = os.path.splitext(os.path.basename(audio_path))[0]  
         vocal_file_dir = os.path.join(model_output_dir, track_name)
         vocal_file_path = os.path.join(vocal_file_dir, "vocals.wav")
 
