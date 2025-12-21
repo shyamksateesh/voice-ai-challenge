@@ -9,6 +9,7 @@ def run_pipeline(input_path, output_path, options, log_callback=print):
     """
     Runs the full processing pipeline: audio extraction, optional separation,
     transcription, optional alignment, and video generation.
+    Returns the transcript segments for further use.
     """
     start_time = time.time()
     log_callback("Starting main processing pipeline...")
@@ -113,6 +114,9 @@ def run_pipeline(input_path, output_path, options, log_callback=print):
             )
 
         log_callback("Video generation complete.")
+
+        # Return segments for transcript access
+        return segments
 
     except Exception as e:
         log_callback(f"ERROR in pipeline: {e}")

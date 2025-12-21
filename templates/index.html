@@ -18,6 +18,18 @@
             border-radius: 4px;
             border: 2px solid #1a202c; /* gray-900 */
         }
+        /* Scrollbar styling for transcript */
+        #transcript-text::-webkit-scrollbar {
+            width: 8px;
+        }
+        #transcript-text::-webkit-scrollbar-track {
+            background: #1a202c; /* gray-900 */
+        }
+        #transcript-text::-webkit-scrollbar-thumb {
+            background-color: #4a5568; /* gray-600 */
+            border-radius: 4px;
+            border: 2px solid #1a202c; /* gray-900 */
+        }
         /* Spinner styles */
         .lds-dual-ring {
             display: inline-block; /* Changed to inline-block */
@@ -70,9 +82,106 @@
         .text-red-200 { color: #fed7d7; }
         .text-red-400 { color: #fc8181; }
 
+        /* Help modal styles */
+        .help-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 420px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .help-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0); }
+        }
+        .help-button:hover {
+            animation: pulse-subtle 1.5s infinite;
+        }
+        /* Clickable word styles - Spotify-like */
+        .transcript-line {
+            display: block;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.6;
+            color: #cbd5e0; /* gray-300 */
+        }
+        .transcript-line:hover {
+            background-color: #4a5568; /* gray-600 */
+            color: #ffffff;
+        }
+        .clickable-word {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .clickable-word:hover {
+            color: #7f9cf5; /* indigo-400 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen font-sans">
+    <!-- Help Button -->
+    <button id="helpButton" class="help-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+        How to Use This Tool
+    </button>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="help-modal hidden">
+        <h3 class="text-lg font-bold text-white mb-3">How to Use LyrAssist</h3>
+        <div class="text-sm text-gray-300 space-y-3">
+            <div>
+                <p class="font-semibold text-white mb-1">Step 1: Upload or Record</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    • <strong>Audio files (MP3, WAV):</strong> Generates a lyric video with black background and centered text<br>
+                    • <strong>Video files (MP4):</strong> Overlays synchronized lyrics on your existing video<br>
+                    • <strong>Record:</strong> Use your microphone to record audio directly in the browser
+                </p>
+            </div>
+
+            <div>
+                <p class="font-semibold text-white mb-1">Step 2: Choose Processing Options</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    • <strong>Whisper Model:</strong> Larger models = better accuracy but slower (Medium recommended)<br>
+                    • <strong>Separate Vocals:</strong> Isolates voice from music for better transcription (adds ~30s)<br>
+                    • <strong>Karaoke Mode:</strong> Word-by-word highlighting with precise timestamps (experimental, slow)
+                </p>
+            </div>
+
+            <div>
+                <p class="font-semibold text-white mb-1">Step 3: Processing</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    Watch real-time logs as AI transcribes your audio and renders the video. Processing time varies based on file length and selected options.
+                </p>
+            </div>
+
+            <div>
+                <p class="font-semibold text-white mb-1">Step 4: Enjoy Your Result</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    • Watch the video with synchronized lyrics<br>
+                    • Download the video (MP4 format)<br>
+                    • Download the transcript (TXT with timestamps)<br>
+                    • Click any lyric line or word to jump to that moment in the video!
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-2xl">
 
         <!-- Initial Form View -->
@@ -80,7 +189,6 @@
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold text-white mb-2">LyrAssist</h1>
                 <h2 class="text-lg text-gray-400">AI-Powered Lyric Transcription & Video Generation</h2>
-                <p class="text-xs text-gray-500 mt-1">(Hiya Innovation Challenge Prototype)</p>
             </div>
 
             <form id="process-form" enctype="multipart/form-data">
@@ -88,12 +196,20 @@
                 <div class="mb-6">
                     <label for="file" class="block text-sm font-medium text-gray-300 mb-2">Upload Video/Audio File:</label>
                     <input type="file" id="file" name="file" accept="video/*,audio/*" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                    <p class="text-xs text-gray-500 mt-2">
+                        <span class="inline-block mr-3">Video: MP4, MOV, AVI</span>
+                        <span class="inline-block">Audio: MP3, WAV, M4A</span>
+                    </p>
+                    <p id="file-selected-info" class="text-xs text-green-400 mt-1 hidden"></p>
                 </div>
                 <!-- OR Separator -->
                 <div class="mb-6 text-center text-gray-400">OR</div>
                 <!-- Audio Recording -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Record Audio:</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Record Audio:
+                        <span class="text-xs text-gray-500 font-normal ml-1">(Requires microphone access)</span>
+                    </label>
                     <div class="flex items-center space-x-4">
                         <button type="button" id="startRecord" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Start Recording</button>
                         <button type="button" id="stopRecord" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out" disabled>Stop Recording</button>
@@ -105,25 +221,38 @@
                 <hr class="border-gray-600 my-6">
                 <!-- Whisper Model Selection -->
                 <div class="mb-4">
-                    <label for="model" class="block text-sm font-medium text-gray-300 mb-2">Whisper Model:</label>
+                    <label for="model" class="block text-sm font-medium text-gray-300 mb-2">
+                        Whisper Model:
+                        <span class="text-xs text-gray-500 font-normal ml-1">(Accuracy vs Speed trade-off)</span>
+                    </label>
                     <select id="model" name="model" class="block w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                        <option value="tiny.en">Tiny</option>
-                        <option value="base.en">Base</option>
-                        <option value="small.en">Small</option>
-                        <option value="medium.en" selected>Medium</option>
-                        <option value="large.en">Large</option>
+                        <option value="tiny.en">Tiny - Fastest, lowest accuracy</option>
+                        <option value="base.en">Base - Fast, moderate accuracy</option>
+                        <option value="small.en">Small - Balanced</option>
+                        <option value="medium.en" selected>Medium - Recommended (Best balance)</option>
+                        <option value="large.en">Large - Slowest, highest accuracy</option>
                     </select>
                 </div>
                 <!-- Processing Options -->
                 <div class="mb-6 space-y-3">
-                     <label class="flex items-center text-sm text-gray-300">
-                        <input type="checkbox" id="separate-vocals" name="separate_vocals" class="form-checkbox h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500">
-                        <span class="ml-2">Separate Vocals (Slow)</span>
-                    </label>
-                   <label class="flex items-center text-sm text-gray-300">
-                        <input type="checkbox" id="wipe-text" name="wipe_text" class="form-checkbox h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500">
-                        <span class="ml-2">Karaoke Wipe Text (Slow)</span>
-                    </label>
+                    <div>
+                        <label class="flex items-start text-sm text-gray-300">
+                            <input type="checkbox" id="separate-vocals" name="separate_vocals" class="form-checkbox h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 mt-0.5">
+                            <div class="ml-2">
+                                <span class="font-medium">Separate Vocals</span>
+                                <span class="text-xs text-gray-500 block">Isolates voice from background music using AI - improves transcription accuracy for songs (adds ~30-60s)</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="flex items-start text-sm text-gray-300">
+                            <input type="checkbox" id="wipe-text" name="wipe_text" class="form-checkbox h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 mt-0.5">
+                            <div class="ml-2">
+                                <span class="font-medium">Karaoke Mode</span>
+                                <span class="text-xs text-gray-500 block">Word-by-word highlighting effect with precise timing - experimental feature (significantly slower)</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
                 <!-- Submit Button -->
                 <div class="mt-6">
@@ -158,9 +287,18 @@
                  <div id="video-container" class="mb-4 aspect-video bg-black rounded overflow-hidden">
                     <!-- Video will be embedded here -->
                  </div>
-                 <div class="flex space-x-4">
-                     <a id="download-link" href="#" download class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download Video</a>
+                 <div class="flex space-x-4 mb-4">
+                     <a id="download-link" href="#" download class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download<br>Video</a>
+                     <a id="download-transcript-link" href="#" download class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download<br>Transcript</a>
                      <button id="process-another" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Process Another File</button>
+                 </div>
+
+                 <!-- Transcript Display -->
+                 <div id="transcript-container" class="mt-6">
+                     <h4 class="text-md font-semibold text-white mb-3">Lyrics (Click on any line or word to jump to that moment)</h4>
+                     <div id="transcript-text" class="bg-gray-900 p-6 rounded border border-gray-700 max-h-96 overflow-y-auto">
+                         <!-- Transcript will be inserted here -->
+                     </div>
                  </div>
             </div>
 
@@ -186,7 +324,10 @@
         const resultArea = document.getElementById('result-area');
         const videoContainer = document.getElementById('video-container');
         const downloadLink = document.getElementById('download-link');
+        const downloadTranscriptLink = document.getElementById('download-transcript-link');
+        const transcriptText = document.getElementById('transcript-text');
         const processAnotherButton = document.getElementById('process-another');
+        const fileSelectedInfo = document.getElementById('file-selected-info');
         const errorMessageBox = document.getElementById('error-message-box');
         const errorMessageContent = document.getElementById('error-message-content');
         const tryAgainButton = document.getElementById('try-again-button');
@@ -206,9 +347,57 @@
         const fileInput = document.getElementById('file');
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            startRecordButton.addEventListener('click', async () => { /* ... */ });
-            stopRecordButton.addEventListener('click', () => { /* ... */ });
-        } else { /* ... disable recording ... */ }
+            startRecordButton.addEventListener('click', async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        audioPlayback.src = audioUrl;
+                        audioPlayback.classList.remove('hidden');
+                        recordingStatus.textContent = 'Recording saved! You can play it back above.';
+                        recordingStatus.classList.remove('text-red-500');
+                        recordingStatus.classList.add('text-green-500');
+
+                        // Stop all tracks to release microphone
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    startRecordButton.disabled = true;
+                    stopRecordButton.disabled = false;
+                    fileInput.disabled = true;
+                    recordingStatus.textContent = 'Recording...';
+                    recordingStatus.classList.remove('text-green-500');
+                    recordingStatus.classList.add('text-red-500');
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    recordingStatus.textContent = 'Error: Could not access microphone.';
+                    recordingStatus.classList.add('text-red-500');
+                }
+            });
+
+            stopRecordButton.addEventListener('click', () => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    startRecordButton.disabled = false;
+                    stopRecordButton.disabled = true;
+                    fileInput.disabled = false;
+                }
+            });
+        } else {
+            startRecordButton.disabled = true;
+            stopRecordButton.disabled = true;
+            recordingStatus.textContent = 'Recording not supported in this browser.';
+            recordingStatus.classList.add('text-red-500');
+        }
         // --- End Audio Recording ---
 
 
@@ -231,6 +420,7 @@
             statusText.textContent = 'Uploading file...'; // <<< Set text part
             statusSpinner.classList.remove('hidden'); // <<< Show spinner
             errorMessageBox.classList.add('hidden'); tryAgainButton.classList.add('hidden');
+            logBox.parentElement.classList.remove('hidden'); // Show log box for new processing
             // songInfoBox removed
 
             try {
@@ -269,18 +459,24 @@
                         statusSpinner.classList.add('hidden'); // <<< Hide spinner
                         statusTitle.textContent = 'Processing Complete!';
 
+                        // Hide the log box after processing completes
+                        logBox.parentElement.classList.add('hidden');
+
                         if (!data.output_filename) { console.error("Filename missing."); showError("Output filename missing."); return; }
                         console.log(`Output filename: ${data.output_filename}`);
+                        console.log("Segments data:", data.segments);
 
                         resultArea.classList.remove('hidden');
                         const videoUrl = `/serve_video/${encodeURIComponent(data.output_filename)}`;
                         console.log(`Video URL: ${videoUrl}`);
 
+                        let videoElement = null; // Declare in broader scope
+
                         if (!videoContainer) { console.error("videoContainer missing!"); showError("UI error: Container missing."); }
                         else {
                             videoContainer.innerHTML = `<video controls preload="metadata" class="w-full h-full rounded" src="${videoUrl}"></video>`;
                             console.log("Video HTML set.");
-                            const videoElement = videoContainer.querySelector('video');
+                            videoElement = videoContainer.querySelector('video'); // Assign to outer variable
                             if (videoElement) {
                                 videoElement.addEventListener('error', (e) => { /* ... error handling ... */ });
                                 videoElement.addEventListener('loadedmetadata', () => { console.log('Metadata loaded.'); });
@@ -289,6 +485,19 @@
                         }
                         downloadLink.href = videoUrl; downloadLink.download = data.output_filename;
                         console.log(`Download link: ${downloadLink.href}`);
+
+                        // Set up transcript download link
+                        if (data.transcript_filename) {
+                            const transcriptUrl = `/serve_transcript/${encodeURIComponent(data.transcript_filename)}`;
+                            downloadTranscriptLink.href = transcriptUrl;
+                            downloadTranscriptLink.download = data.transcript_filename;
+                        }
+
+                        // Display interactive transcript
+                        if (data.segments && data.segments.length > 0) {
+                            displayTranscript(data.segments, videoElement);
+                        }
+
                         submitButton.disabled = false; submitText.textContent = 'Start Processing'; submitSpinner.classList.add('hidden');
 
                     } else if (data.status === 'failed') {
@@ -331,6 +540,8 @@
             resultArea.classList.add('hidden'); errorMessageBox.classList.add('hidden');
             tryAgainButton.classList.add('hidden'); // songInfoBox removed
             videoContainer.innerHTML = ''; logBox.textContent = 'Waiting for logs...'; currentLogLength = 0;
+            transcriptText.innerHTML = ''; // Clear transcript
+            logBox.parentElement.classList.remove('hidden'); // Show log box for next processing
             statusTitle.textContent = 'Processing Status';
             statusText.textContent = 'Uploading file...'; // <<< Set text part
             statusSpinner.classList.add('hidden'); // <<< Hide spinner
@@ -351,8 +562,152 @@
         processAnotherButton.addEventListener('click', resetUI);
         tryAgainButton.addEventListener('click', resetUI);
 
-        // Enable/Disable recording based on file input logic (remains the same)
-         fileInput.addEventListener('change', () => { /* ... */ });
+        // Enable/Disable recording based on file input logic + File validation feedback
+         fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Convert to MB
+                const fileExt = fileName.split('.').pop().toLowerCase();
+
+                // Determine file type
+                const videoExts = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+                const audioExts = ['mp3', 'wav', 'm4a', 'flac', 'aac'];
+
+                let fileType = '';
+                let outputDesc = '';
+
+                if (videoExts.includes(fileExt)) {
+                    fileType = 'Video';
+                    outputDesc = 'Lyrics will be overlaid on your video';
+                } else if (audioExts.includes(fileExt)) {
+                    fileType = 'Audio';
+                    outputDesc = 'A lyric video will be generated with black background';
+                } else {
+                    fileType = 'Unknown';
+                    outputDesc = 'Processing may fail';
+                }
+
+                // Show file info
+                fileSelectedInfo.textContent = `${fileType} file selected: ${fileName} (${fileSize} MB) - ${outputDesc}`;
+                fileSelectedInfo.classList.remove('hidden');
+
+                // File selected, disable recording
+                startRecordButton.disabled = true;
+                audioBlob = null;
+                audioPlayback.classList.add('hidden');
+                audioPlayback.src = '';
+                recordingStatus.textContent = '';
+            } else {
+                // No file selected, hide info and enable recording
+                fileSelectedInfo.classList.add('hidden');
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    startRecordButton.disabled = false;
+                }
+            }
+         });
+
+        // Function to display interactive transcript
+        function displayTranscript(segments, videoElement) {
+            console.log("displayTranscript called with segments:", segments);
+            console.log("Video element:", videoElement);
+
+            transcriptText.innerHTML = ''; // Clear existing content
+
+            if (!segments || segments.length === 0) {
+                transcriptText.innerHTML = '<span class="text-gray-500">No transcript available</span>';
+                console.warn("No segments to display");
+                return;
+            }
+
+            segments.forEach(seg => {
+                // Create a line div for each segment (Spotify-style)
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'transcript-line';
+
+                // Check if we have word-level timestamps (from karaoke mode)
+                if (seg.words && seg.words.length > 0) {
+                    // Word-by-word clickable
+                    seg.words.forEach((wordObj, idx) => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.textContent = wordObj.word || wordObj.text || '';
+                        wordSpan.className = 'clickable-word';
+                        wordSpan.dataset.timestamp = wordObj.start;
+
+                        wordSpan.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent line click
+                            if (videoElement) {
+                                videoElement.currentTime = wordObj.start;
+                                videoElement.play();
+                            }
+                        });
+
+                        lineDiv.appendChild(wordSpan);
+
+                        // Add space after word if not the last word
+                        if (idx < seg.words.length - 1) {
+                            lineDiv.appendChild(document.createTextNode(' '));
+                        }
+                    });
+                } else {
+                    // Phrase-level clickable (no word timestamps)
+                    const text = seg.text || '';
+                    const words = text.trim().split(/\s+/);
+                    const segmentDuration = (seg.end - seg.start) / words.length;
+
+                    words.forEach((word, idx) => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.textContent = word;
+                        wordSpan.className = 'clickable-word';
+                        // Estimate timestamp for each word
+                        const estimatedTimestamp = seg.start + (idx * segmentDuration);
+                        wordSpan.dataset.timestamp = estimatedTimestamp;
+
+                        wordSpan.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent line click
+                            if (videoElement) {
+                                videoElement.currentTime = estimatedTimestamp;
+                                videoElement.play();
+                            }
+                        });
+
+                        lineDiv.appendChild(wordSpan);
+
+                        // Add space after word if not the last word
+                        if (idx < words.length - 1) {
+                            lineDiv.appendChild(document.createTextNode(' '));
+                        }
+                    });
+                }
+
+                // Make the entire line clickable to jump to the start of the segment
+                lineDiv.addEventListener('click', () => {
+                    if (videoElement) {
+                        videoElement.currentTime = seg.start;
+                        videoElement.play();
+                    }
+                });
+
+                // Add the line to the transcript container
+                transcriptText.appendChild(lineDiv);
+            });
+        }
+
+        // Help Modal Toggle
+        const helpButton = document.getElementById('helpButton');
+        const helpModal = document.getElementById('helpModal');
+
+        helpButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            helpModal.classList.toggle('hidden');
+        });
+
+        // Close help modal when clicking anywhere else
+        document.addEventListener('click', (e) => {
+            if (!helpModal.classList.contains('hidden') && !helpModal.contains(e.target) && e.target !== helpButton) {
+                helpModal.classList.add('hidden');
+            }
+        });
 
     </script>
 </body>

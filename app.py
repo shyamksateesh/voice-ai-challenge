@@ -18,6 +18,12 @@ os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 TASK_STATUS = {} # Simplified status
 
+def format_timestamp(seconds):
+    """Convert seconds to MM:SS format"""
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{minutes:02d}:{secs:02d}"
+
 def is_allowed_file(filename):
     allowed_extensions = set(config.VIDEO_EXTENSIONS + config.AUDIO_EXTENSIONS)
     if not filename: return False
@@ -36,7 +42,26 @@ def start_processing_thread(task_id, input_path, output_path, options, log_callb
              print(f"[Thread {task_id}]: Task cancelled or removed before starting.")
              return
         log_callback(f"[Task {task_id}]: Pipeline thread started.")
-        pipeline.run_pipeline(input_path, output_path, options, log_callback)
+        segments = pipeline.run_pipeline(input_path, output_path, options, log_callback)
+
+        # Save transcript data and create text file
+        if task_id in TASK_STATUS and segments:
+            TASK_STATUS[task_id]['segments'] = segments
+
+            # Create transcript text file
+            transcript_filename = TASK_STATUS[task_id]['output_filename'].replace('.mp4', '_transcript.txt')
+            transcript_path = os.path.join(app.config['OUTPUT_FOLDER'], transcript_filename)
+
+            with open(transcript_path, 'w', encoding='utf-8') as f:
+                for seg in segments:
+                    # Format: [timestamp] text
+                    start_time = seg.get('start', 0)
+                    text = seg.get('text', '').strip()
+                    f.write(f"[{format_timestamp(start_time)}] {text}\n")
+
+            TASK_STATUS[task_id]['transcript_filename'] = transcript_filename
+            log_callback(f"[Task {task_id}]: Transcript saved to {transcript_filename}")
+
         # Check again if task still exists before marking complete
         if task_id in TASK_STATUS:
              TASK_STATUS[task_id]['status'] = 'complete'
@@ -182,6 +207,19 @@ def serve_video(filename):
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
          print(f"[Server] Error serving file {filename}: {e}")
+         return jsonify({"error": "Could not serve file"}), 500
+
+@app.route('/serve_transcript/<filename>')
+def serve_transcript(filename):
+    """Serves the transcript text file for download."""
+    print(f"[Server] Attempting to serve transcript: {filename}")
+    try:
+        return send_from_directory(app.config['OUTPUT_FOLDER'], filename, as_attachment=True, mimetype='text/plain')
+    except FileNotFoundError:
+        print(f"[Server] Error: Transcript file not found: {filename}")
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+         print(f"[Server] Error serving transcript {filename}: {e}")
          return jsonify({"error": "Could not serve file"}), 500
 
 
