@@ -1,14 +1,44 @@
-# LyrAssist
+# 🎵 LyrAssist
 
 **AI-Powered Lyric Transcription & Video Generation**
 
-LyrAssist is a full-stack web application that automatically transcribes audio/video files and generates synchronized lyric videos using state-of-the-art AI models. Upload a song or video, and get back a professionally formatted lyric video with interactive transcript features.
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?logo=flask)](https://flask.palletsprojects.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch)](https://pytorch.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-412991?logo=openai)](https://github.com/openai/whisper)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![LyrAssist Homepage](images/homepage.png)
+> A full-stack web application that automatically transcribes audio/video files and generates synchronized lyric videos using state-of-the-art AI models. Upload a song or video, and get back a professionally formatted lyric video with interactive transcript features.
+
+[Demo Video](#) | [Report Issues](../../issues) | [Try it out yourself!](https://shyamksateesh.github.io/LyrAssist/)
 
 ---
 
-## Features
+## 📸 Project Showcase
+
+<div align="center">
+
+### Upload Interface
+![Upload Interface](images/upload-interface.png)
+*Clean, intuitive upload experience with multiple input methods*
+
+### Processing View
+![Processing View](images/processing-view.png)
+*Real-time logs and progress tracking throughout the AI pipeline*
+
+### Interactive Lyrics
+![Interactive Lyrics](images/interactive-lyrics.png)
+*Spotify-style clickable transcript with synchronized playback*
+
+### Result View
+![Result View](images/result-view.png)
+*Professional lyric videos with customizable styling options*
+
+</div>
+
+---
+
+## 🎯 Features
 
 ### 🎤 Smart Audio Processing
 - **Multiple Input Methods**: Upload audio files (MP3, WAV, M4A), video files (MP4, MOV, AVI), or record directly in your browser
@@ -28,33 +58,14 @@ LyrAssist is a full-stack web application that automatically transcribes audio/v
 - **Downloadable Transcript**: Export timestamped transcripts as formatted text files
 - **Spotify-Style UI**: Clean, modern interface with hover effects and smooth interactions
 
-![Interactive Lyrics](images/interactive-lyrics.png)
-
 ### ⚡ Real-Time Processing
 - **Live Logs**: Watch real-time processing updates as AI transcribes and renders your video
 - **Background Processing**: Asynchronous task handling prevents browser timeouts
 - **Progress Tracking**: Clear status updates throughout the entire pipeline
 
-![Processing View](images/processing-view.png)
-
 ---
 
-## Demo
-
-### Upload & Configure
-![Upload Interface](images/upload-interface.png)
-
-### Result View
-![Result View](images/result-view.png)
-
-### Download Options
-- Download the generated video (MP4 format)
-- Download the transcript (TXT with timestamps)
-- Watch inline with interactive lyrics
-
----
-
-## Technology Stack
+## 🛠️ Technology Stack
 
 ### Backend
 - **Python 3.10+** - Core application runtime
@@ -77,7 +88,7 @@ LyrAssist is a full-stack web application that automatically transcribes audio/v
 
 ---
 
-## Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -98,8 +109,8 @@ LyrAssist is a full-stack web application that automatically transcribes audio/v
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repository-url>
-   cd voiceAIcodebase
+   git clone https://github.com/shyamksateesh/LyrAssist.git
+   cd LyrAssist
    ```
 
 2. **Create a virtual environment**
@@ -126,10 +137,6 @@ LyrAssist is a full-stack web application that automatically transcribes audio/v
    mkdir uploads outputs
    ```
 
----
-
-## Usage
-
 ### Starting the Application
 
 1. **Run the Flask server**
@@ -139,7 +146,11 @@ LyrAssist is a full-stack web application that automatically transcribes audio/v
 
 2. **Open your browser**
 
-   Navigate to `http://127.0.0.1:5001`
+   Navigate to `http://127.0.0.1:5001` 🎉
+
+---
+
+## 📖 Usage Guide
 
 ### Using LyrAssist
 
@@ -175,10 +186,33 @@ Click "Start Processing" and monitor real-time logs as the AI:
 
 ---
 
-## Project Structure
+## 🏗️ System Architecture
 
 ```
-voiceAIcodebase/
+┌────────────────────────────────────────────────────────────┐
+│                     PROCESSING PIPELINE                    │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  Upload → Audio Extract → Transcribe → Align → Render     │
+│                                                            │
+│  [User    [FFmpeg]      [Whisper]   [WhisperX] [MoviePy]  │
+│   Input]                                                   │
+│                                                            │
+│  Optional: Vocal Separation (Demucs) for music tracks     │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Web Layer**: Flask API with background threading for async processing  
+**AI Layer**: Whisper + WhisperX for transcription and alignment  
+**Media Layer**: FFmpeg + MoviePy for video composition
+
+---
+
+## 📂 Project Structure
+
+```
+LyrAssist/
 ├── app.py                    # Flask server & API endpoints
 ├── pipeline.py               # Main processing orchestration
 ├── audio_processing.py       # Audio extraction & vocal separation
@@ -189,60 +223,13 @@ voiceAIcodebase/
 │   └── index.html           # Web UI
 ├── uploads/                 # User uploaded files (gitignored)
 ├── outputs/                 # Generated videos (gitignored)
-├── images/                  # README screenshots
+├── images/                  # Project screenshots
 └── README.md
 ```
 
 ---
 
-## Architecture
-
-### Processing Pipeline
-
-```
-User Upload
-    ↓
-Audio Extraction (16kHz mono WAV)
-    ↓
-[Optional] Vocal Separation (Demucs)
-    ↓
-Transcription (Whisper)
-    ↓
-[Optional] Forced Alignment (WhisperX)
-    ↓
-Video Generation (MoviePy)
-    ↓
-Output: MP4 Video + TXT Transcript
-```
-
-### Key Components
-
-**Backend (app.py)**
-- Flask routes for upload, status polling, and file serving
-- Background threading for asynchronous processing
-- Task status management with unique IDs
-- Error handling and logging
-
-**Pipeline (pipeline.py)**
-- Orchestrates the complete processing workflow
-- Manages temporary files and cleanup
-- Returns transcript segments for frontend use
-
-**Video Processing (video_processing.py)**
-- Detects input type (audio vs video)
-- Downscales video to 720p for consistent performance
-- Renders phrase-level or word-level subtitles
-- Handles audio sync with optional vocal-only tracks
-
-**Frontend (templates/index.html)**
-- Responsive single-page application
-- Real-time status updates via polling
-- Interactive transcript with clickable words
-- File validation and user feedback
-
----
-
-## Configuration
+## ⚙️ Configuration
 
 Edit `config.py` to customize:
 
@@ -263,7 +250,7 @@ REPLACE_AUDIO_WITH_VOCALS = False  # Use separated vocals in output
 
 ---
 
-## Performance Notes
+## 📊 Performance Notes
 
 - **Processing Time**: Varies based on file length, model size, and enabled options
   - Typical 3-minute song: ~30-90 seconds (Medium model, no vocal separation)
@@ -280,7 +267,7 @@ REPLACE_AUDIO_WITH_VOCALS = False  # Use separated vocals in output
 
 ---
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
@@ -308,7 +295,9 @@ REPLACE_AUDIO_WITH_VOCALS = False  # Use separated vocals in output
 
 ---
 
-## Future Enhancements
+## 🗺️ Roadmap
+
+### Planned Features
 
 - [ ] Real-time streaming transcription via WebSocket
 - [ ] Multi-language support
@@ -320,31 +309,79 @@ REPLACE_AUDIO_WITH_VOCALS = False  # Use separated vocals in output
 
 ---
 
-## License
+## 🤝 Contributing
 
-This project is open source and available under the [MIT License](LICENSE).
+Contributions are welcome! Here's how to get started:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Make your changes with clear commit messages
+4. Test thoroughly (see [Testing](#testing) below)
+5. Submit a Pull Request
+
+### Development Guidelines
+
+- Follow existing code style and conventions
+- Add comments for complex logic
+- Keep components focused and reusable
+- Test on multiple browsers and platforms
+
+### Testing Checklist
+
+Before submitting a PR:
+
+- [ ] Tested on Chrome, Firefox, and Safari
+- [ ] Verified with both audio and video inputs
+- [ ] Tested vocal separation feature
+- [ ] Confirmed karaoke mode works
+- [ ] No console errors or warnings
 
 ---
 
-## Acknowledgments
+## 📄 License
 
-- **OpenAI Whisper** - Speech recognition model
-- **WhisperX** - Forced alignment system
-- **Demucs** - Music source separation
-- Built with Flask, MoviePy, and modern web technologies
+This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file for details.
+
+**Third-Party Licenses**:
+- OpenAI Whisper (MIT), WhisperX (BSD), Demucs (MIT)
+- Flask (BSD-3-Clause), MoviePy (MIT)
+
+---
+
+## 🙏 Acknowledgments
+
+### Core Technologies & Tools
+
+- **[OpenAI Whisper](https://github.com/openai/whisper)** - State-of-the-art speech recognition
+- **[WhisperX](https://github.com/m-bain/whisperX)** - Forced alignment for precise timestamps
+- **[Demucs](https://github.com/facebookresearch/demucs)** - Music source separation
+- **[Flask](https://flask.palletsprojects.com/)** - Lightweight web framework
+- **[MoviePy](https://zulko.github.io/moviepy/)** - Video editing and composition
+
+### Special Recognition
+
+- **OpenAI** - For pioneering accessible AI transcription
+- **The Open Source Community** - For making this project possible
 
 ---
 
-## Screenshots Guide
+## 📧 Contact
 
-To complete this README, add the following screenshots to the `images/` folder:
+**Shyam Krishna Sateesh**
+- Email: shyam.s@nyu.edu
+- GitHub: [@shyamksateesh](https://github.com/shyamksateesh)
+- LinkedIn: [linkedin.com/in/shyamksateesh](https://www.linkedin.com/in/shyamksateesh/)
 
-1. **homepage.png** - Full view of the main upload form with all options visible
-2. **upload-interface.png** - Close-up of the upload section showing file selection and recording options
-3. **processing-view.png** - Screenshot during processing showing the live logs
-4. **result-view.png** - Final result page showing the video player, download buttons, and interactive lyrics
-5. **interactive-lyrics.png** - Close-up of the lyrics section showing the clickable words and Spotify-style UI
+**Project Repository**: [github.com/shyamksateesh/LyrAssist](https://github.com/shyamksateesh/LyrAssist)
 
 ---
+
+<div align="center">
 
 **Built with ❤️ for seamless lyric video generation**
+
+If you find this project useful, please ⭐ **star the repo**!
+
+[Report Bug](../../issues) · [Request Feature](../../issues)
+
+</div>
