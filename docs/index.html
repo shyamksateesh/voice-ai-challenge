@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LyrAssist - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Scrollbar styling for transcript */
+        #transcript-text::-webkit-scrollbar {
+            width: 8px;
+        }
+        #transcript-text::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        #transcript-text::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+            border-radius: 4px;
+            border: 2px solid #1a202c;
+        }
+
+        /* Dark theme adjustments */
+        body { background-color: #1a202c; color: #e2e8f0; }
+        .bg-gray-800 { background-color: #2d3748; }
+        .text-gray-400 { color: #a0aec0; }
+        .text-gray-500 { color: #718096; }
+        .border-gray-600 { border-color: #4a5568; }
+        .border-gray-700 { border-color: #2d3748; }
+        .bg-gray-700 { background-color: #4a5568; }
+        .bg-gray-900 { background-color: #1a202c; }
+        .text-white { color: #f7fafc; }
+        .bg-indigo-600 { background-color: #5a67d8; }
+        .hover\:bg-indigo-700:hover { background-color: #4c51bf; }
+        .bg-green-600 { background-color: #38a169; }
+        .hover\:bg-green-700:hover { background-color: #2f855a; }
+        .bg-gray-600 { background-color: #718096; }
+        .hover\:bg-gray-700:hover { background-color: #4a5568; }
+        .bg-blue-600 { background-color: #3182ce; }
+        .hover\:bg-blue-700:hover { background-color: #2c5282; }
+
+        /* Help modal styles */
+        .help-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 420px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .help-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0); }
+        }
+        .help-button:hover {
+            animation: pulse-subtle 1.5s infinite;
+        }
+
+        /* Clickable word styles - Spotify-like */
+        .transcript-line {
+            display: block;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.6;
+            color: #cbd5e0;
+        }
+        .transcript-line:hover {
+            background-color: #4a5568;
+            color: #ffffff;
+        }
+        .clickable-word {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .clickable-word:hover {
+            color: #7f9cf5;
+        }
+
+        /* Demo banner */
+        .demo-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col min-h-screen font-sans">
+
+    <!-- Demo Banner -->
+    <div class="demo-banner">
+        DEMO VERSION - This is a static preview. For full functionality with AI processing,
+        <a href="https://github.com/shyamksateesh/LyrAssist" class="underline hover:text-gray-200" target="_blank">install locally from GitHub</a>
+    </div>
+
+    <!-- Help Button -->
+    <button id="helpButton" class="help-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+        How to Use This Tool
+    </button>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="help-modal hidden">
+        <h3 class="text-lg font-bold text-white mb-3">How to Use LyrAssist</h3>
+        <div class="text-sm text-gray-300 space-y-3">
+            <div>
+                <p class="font-semibold text-white mb-1">Demo Mode</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    This is a static demo showcasing the interface and features. Click "Try Demo" to see a pre-processed example video with interactive lyrics.
+                </p>
+            </div>
+
+            <div>
+                <p class="font-semibold text-white mb-1">Full Version Features</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    • Upload audio/video files or record directly<br>
+                    • AI-powered transcription using Whisper<br>
+                    • Optional vocal separation for music tracks<br>
+                    • Generate synchronized lyric videos<br>
+                    • Interactive clickable lyrics
+                </p>
+            </div>
+
+            <div>
+                <p class="font-semibold text-white mb-1">Install Locally</p>
+                <p class="text-xs leading-relaxed ml-4">
+                    To process your own files, clone the <a href="https://github.com/shyamksateesh/LyrAssist" class="text-indigo-400 hover:text-indigo-300 underline" target="_blank">GitHub repository</a> and follow the setup instructions.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-2xl">
+
+            <!-- Demo View -->
+            <div id="demo-view">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold text-white mb-2">LyrAssist</h1>
+                    <h2 class="text-lg text-gray-400">AI-Powered Lyric Transcription & Video Generation</h2>
+                    <p class="text-sm text-gray-500 mt-2">Try the demo below to see the tool in action</p>
+                </div>
+
+                <div class="space-y-4">
+                    <button id="tryDemoBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded transition duration-150 ease-in-out">
+                        Try Demo - "Almost Lover" by A Fine Frenzy
+                    </button>
+
+                    <div class="text-center text-gray-400 text-sm">
+                        <p class="mb-2">Want to process your own files?</p>
+                        <a href="https://github.com/shyamksateesh/LyrAssist" target="_blank" class="inline-block bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded transition duration-150 ease-in-out">
+                            Install from GitHub →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Area -->
+            <div id="result-area" class="hidden">
+                <h3 class="text-lg font-semibold text-white mb-3 text-center">Demo Result</h3>
+                <div id="video-container" class="mb-4 aspect-video bg-black rounded overflow-hidden">
+                    <!-- Video will be embedded here -->
+                </div>
+                <div class="flex space-x-4 mb-4">
+                    <a href="demo-assets/demo-video.mp4" download="LyrAssist-Demo.mp4" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download<br>Video</a>
+                    <a href="demo-assets/demo-transcript.txt" download="LyrAssist-Transcript.txt" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Download<br>Transcript</a>
+                    <button id="resetDemoBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Try Again</button>
+                </div>
+
+                <!-- Transcript Display -->
+                <div id="transcript-container" class="mt-6">
+                    <h4 class="text-md font-semibold text-white mb-3">Lyrics (Click on any line or word to jump to that moment)</h4>
+                    <div id="transcript-text" class="bg-gray-900 p-6 rounded border border-gray-700 max-h-96 overflow-y-auto">
+                        <!-- Transcript will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Load demo segments from JSON file
+        let DEMO_SEGMENTS = [];
+
+        const demoView = document.getElementById('demo-view');
+        const resultArea = document.getElementById('result-area');
+        const videoContainer = document.getElementById('video-container');
+        const transcriptText = document.getElementById('transcript-text');
+        const tryDemoBtn = document.getElementById('tryDemoBtn');
+        const resetDemoBtn = document.getElementById('resetDemoBtn');
+        const helpButton = document.getElementById('helpButton');
+        const helpModal = document.getElementById('helpModal');
+
+        // Try Demo Button
+        tryDemoBtn.addEventListener('click', async () => {
+            demoView.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+
+            // Load video
+            videoContainer.innerHTML = `<video id="demoVideo" controls preload="metadata" class="w-full h-full rounded" src="demo-assets/demo-video.mp4"></video>`;
+
+            const videoElement = document.getElementById('demoVideo');
+
+            // Load segments from JSON file
+            try {
+                const response = await fetch('demo-assets/demo-segments.json');
+                DEMO_SEGMENTS = await response.json();
+
+                // Display transcript
+                displayTranscript(DEMO_SEGMENTS, videoElement);
+            } catch (error) {
+                console.error('Error loading segments:', error);
+                transcriptText.innerHTML = '<span class="text-red-400">Error loading lyrics data</span>';
+            }
+        });
+
+        // Reset Demo Button
+        resetDemoBtn.addEventListener('click', () => {
+            resultArea.classList.add('hidden');
+            demoView.classList.remove('hidden');
+            videoContainer.innerHTML = '';
+            transcriptText.innerHTML = '';
+        });
+
+        // Display interactive transcript
+        function displayTranscript(segments, videoElement) {
+            transcriptText.innerHTML = '';
+
+            if (!segments || segments.length === 0) {
+                transcriptText.innerHTML = '<span class="text-gray-500">No transcript available</span>';
+                return;
+            }
+
+            segments.forEach(seg => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'transcript-line';
+
+                const text = seg.text || '';
+                const words = text.trim().split(/\s+/);
+                const segmentDuration = (seg.end - seg.start) / words.length;
+
+                words.forEach((word, idx) => {
+                    const wordSpan = document.createElement('span');
+                    wordSpan.textContent = word;
+                    wordSpan.className = 'clickable-word';
+                    const estimatedTimestamp = seg.start + (idx * segmentDuration);
+                    wordSpan.dataset.timestamp = estimatedTimestamp;
+
+                    wordSpan.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (videoElement) {
+                            videoElement.currentTime = estimatedTimestamp;
+                            videoElement.play();
+                        }
+                    });
+
+                    lineDiv.appendChild(wordSpan);
+
+                    if (idx < words.length - 1) {
+                        lineDiv.appendChild(document.createTextNode(' '));
+                    }
+                });
+
+                // Make entire line clickable
+                lineDiv.addEventListener('click', () => {
+                    if (videoElement) {
+                        videoElement.currentTime = seg.start;
+                        videoElement.play();
+                    }
+                });
+
+                transcriptText.appendChild(lineDiv);
+            });
+        }
+
+        // Help Modal Toggle
+        helpButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            helpModal.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!helpModal.classList.contains('hidden') && !helpModal.contains(e.target) && e.target !== helpButton) {
+                helpModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

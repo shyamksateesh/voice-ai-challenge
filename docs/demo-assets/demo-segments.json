@@ -1,0 +1,514 @@
+[
+  {
+    "end": 2.46,
+    "start": 0,
+    "text": " You were just a fire",
+    "words": [
+      {
+        "end": 0.325,
+        "score": 0.439,
+        "start": 0,
+        "word": "You"
+      },
+      {
+        "end": 1.22,
+        "score": 0.018,
+        "start": 1.139,
+        "word": "were"
+      },
+      {
+        "end": 1.403,
+        "score": 0.542,
+        "start": 1.24,
+        "word": "just"
+      },
+      {
+        "end": 2.257,
+        "score": 0.752,
+        "start": 2.054,
+        "word": "a"
+      },
+      {
+        "end": 2.46,
+        "score": 0.249,
+        "start": 2.379,
+        "word": "fire"
+      }
+    ]
+  },
+  {
+    "end": 5.76,
+    "start": 3,
+    "text": " To unmake it that easy",
+    "words": [
+      {
+        "end": 3.426,
+        "score": 0.726,
+        "start": 3,
+        "word": "To"
+      },
+      {
+        "end": 4.035,
+        "score": 0.775,
+        "start": 3.487,
+        "word": "unmake"
+      },
+      {
+        "end": 4.238,
+        "score": 0.972,
+        "start": 4.137,
+        "word": "it"
+      },
+      {
+        "end": 4.644,
+        "score": 0.815,
+        "start": 4.319,
+        "word": "that"
+      },
+      {
+        "end": 5.76,
+        "score": 0.411,
+        "start": 5.293,
+        "word": "easy"
+      }
+    ]
+  },
+  {
+    "end": 8.98,
+    "start": 5.74,
+    "text": " To walk right in and out",
+    "words": [
+      {
+        "end": 6.489,
+        "score": 0.856,
+        "start": 5.74,
+        "word": "To"
+      },
+      {
+        "end": 6.793,
+        "score": 0.69,
+        "start": 6.53,
+        "word": "walk"
+      },
+      {
+        "end": 7.563,
+        "score": 0.546,
+        "start": 6.894,
+        "word": "right"
+      },
+      {
+        "end": 7.765,
+        "score": 0.892,
+        "start": 7.664,
+        "word": "in"
+      },
+      {
+        "end": 7.968,
+        "score": 0.847,
+        "start": 7.866,
+        "word": "and"
+      },
+      {
+        "end": 8.98,
+        "score": 0.417,
+        "start": 8.859,
+        "word": "out"
+      }
+    ]
+  },
+  {
+    "end": 13.24,
+    "start": 10,
+    "text": " Of my life",
+    "words": [
+      {
+        "end": 10.324,
+        "score": 0.834,
+        "start": 10,
+        "word": "Of"
+      },
+      {
+        "end": 11.357,
+        "score": 0.396,
+        "start": 11.316,
+        "word": "my"
+      },
+      {
+        "end": 13.24,
+        "score": 0.688,
+        "start": 11.863,
+        "word": "life"
+      }
+    ]
+  },
+  {
+    "end": 19.08,
+    "start": 16,
+    "text": " Goodbye my almost lover",
+    "words": [
+      {
+        "end": 16.79,
+        "score": 0.813,
+        "start": 16,
+        "word": "Goodbye"
+      },
+      {
+        "end": 16.851,
+        "score": 0.496,
+        "start": 16.811,
+        "word": "my"
+      },
+      {
+        "end": 18.432,
+        "score": 0.788,
+        "start": 17.256,
+        "word": "almost"
+      },
+      {
+        "end": 19.08,
+        "score": 0.855,
+        "start": 18.533,
+        "word": "lover"
+      }
+    ]
+  },
+  {
+    "end": 23.08,
+    "start": 20,
+    "text": " Goodbye my hopeless dream",
+    "words": [
+      {
+        "end": 20.912,
+        "score": 0.805,
+        "start": 20,
+        "word": "Goodbye"
+      },
+      {
+        "end": 21.398,
+        "score": 0.872,
+        "start": 21.034,
+        "word": "my"
+      },
+      {
+        "end": 22.432,
+        "score": 0.742,
+        "start": 21.56,
+        "word": "hopeless"
+      },
+      {
+        "end": 23.08,
+        "score": 0.685,
+        "start": 22.533,
+        "word": "dream"
+      }
+    ]
+  },
+  {
+    "end": 27.5,
+    "start": 24,
+    "text": " I'm trying not to think about you",
+    "words": [
+      {
+        "end": 24.486,
+        "score": 0.568,
+        "start": 24,
+        "word": "I'm"
+      },
+      {
+        "end": 25.113,
+        "score": 0.181,
+        "start": 24.526,
+        "word": "trying"
+      },
+      {
+        "end": 25.295,
+        "score": 0.632,
+        "start": 25.133,
+        "word": "not"
+      },
+      {
+        "end": 25.437,
+        "score": 0.39,
+        "start": 25.396,
+        "word": "to"
+      },
+      {
+        "end": 26.043,
+        "score": 0.824,
+        "start": 25.538,
+        "word": "think"
+      },
+      {
+        "end": 27.217,
+        "score": 0.356,
+        "start": 26.104,
+        "word": "about"
+      },
+      {
+        "end": 27.5,
+        "score": 0.333,
+        "start": 27.44,
+        "word": "you"
+      }
+    ]
+  },
+  {
+    "end": 31.52,
+    "start": 27.48,
+    "text": " Can't you just let me be",
+    "words": [
+      {
+        "end": 28.591,
+        "score": 0.288,
+        "start": 27.48,
+        "word": "Can't"
+      },
+      {
+        "end": 28.995,
+        "score": 0.453,
+        "start": 28.611,
+        "word": "you"
+      },
+      {
+        "end": 29.662,
+        "score": 0.768,
+        "start": 29.015,
+        "word": "just"
+      },
+      {
+        "end": 29.864,
+        "score": 0.768,
+        "start": 29.682,
+        "word": "let"
+      },
+      {
+        "end": 30.409,
+        "score": 0.88,
+        "start": 30.046,
+        "word": "me"
+      },
+      {
+        "end": 31.52,
+        "score": 0.5,
+        "start": 31.48,
+        "word": "be"
+      }
+    ]
+  },
+  {
+    "end": 35.26,
+    "start": 31.5,
+    "text": " So long my luckless romance",
+    "words": [
+      {
+        "end": 32.288,
+        "score": 0.936,
+        "start": 31.5,
+        "word": "So"
+      },
+      {
+        "end": 33.077,
+        "score": 0.962,
+        "start": 32.41,
+        "word": "long"
+      },
+      {
+        "end": 33.542,
+        "score": 0,
+        "start": 33.501,
+        "word": "my"
+      },
+      {
+        "end": 34.411,
+        "score": 0.682,
+        "start": 33.562,
+        "word": "luckless"
+      },
+      {
+        "end": 35.26,
+        "score": 0.368,
+        "start": 34.593,
+        "word": "romance"
+      }
+    ]
+  },
+  {
+    "end": 39.38,
+    "start": 35.24,
+    "text": " My back is turned on to you",
+    "words": [
+      {
+        "end": 36.23,
+        "score": 0.922,
+        "start": 35.24,
+        "word": "My"
+      },
+      {
+        "end": 36.896,
+        "score": 0.654,
+        "start": 36.31,
+        "word": "back"
+      },
+      {
+        "end": 37.522,
+        "score": 0.332,
+        "start": 37.462,
+        "word": "is"
+      },
+      {
+        "end": 38.976,
+        "score": 0.78,
+        "start": 37.542,
+        "word": "turned"
+      },
+      {
+        "end": 39.037,
+        "score": 0.488,
+        "start": 38.996,
+        "word": "on"
+      },
+      {
+        "end": 39.097,
+        "score": 0.5,
+        "start": 39.057,
+        "word": "to"
+      },
+      {
+        "end": 39.38,
+        "score": 0.333,
+        "start": 39.32,
+        "word": "you"
+      }
+    ]
+  },
+  {
+    "end": 43.6,
+    "start": 39.36,
+    "text": " Should've known you'd bring me heartache",
+    "words": [
+      {
+        "end": 40.471,
+        "score": 0.259,
+        "start": 39.36,
+        "word": "Should've"
+      },
+      {
+        "end": 41.157,
+        "score": 0.697,
+        "start": 40.571,
+        "word": "known"
+      },
+      {
+        "end": 41.722,
+        "score": 0.183,
+        "start": 41.197,
+        "word": "you'd"
+      },
+      {
+        "end": 42.066,
+        "score": 0.456,
+        "start": 41.743,
+        "word": "bring"
+      },
+      {
+        "end": 42.429,
+        "score": 0.895,
+        "start": 42.086,
+        "word": "me"
+      },
+      {
+        "end": 43.6,
+        "score": 0.218,
+        "start": 43.196,
+        "word": "heartache"
+      }
+    ]
+  },
+  {
+    "end": 47.78,
+    "start": 43.58,
+    "text": " Almost lovers always",
+    "words": [
+      {
+        "end": 45.498,
+        "score": 0.952,
+        "start": 43.58,
+        "word": "Almost"
+      },
+      {
+        "end": 46.69,
+        "score": 0.858,
+        "start": 45.72,
+        "word": "lovers"
+      },
+      {
+        "end": 47.78,
+        "score": 0.771,
+        "start": 47.094,
+        "word": "always"
+      }
+    ]
+  },
+  {
+    "end": 50.341,
+    "start": 49.48,
+    "text": " Do",
+    "words": [
+      {
+        "end": 50.341,
+        "score": 0.936,
+        "start": 49.48,
+        "word": "Do"
+      }
+    ]
+  },
+  {
+    "end": 60.001,
+    "start": 58.58,
+    "text": " I'm trying not to think about you",
+    "words": [
+      {
+        "end": 59.383,
+        "score": 0.217,
+        "start": 58.58,
+        "word": "I'm"
+      },
+      {
+        "end": 59.527,
+        "score": 0.026,
+        "start": 59.404,
+        "word": "trying"
+      },
+      {
+        "end": 59.609,
+        "score": 0.048,
+        "start": 59.548,
+        "word": "not"
+      },
+      {
+        "end": 59.671,
+        "score": 0.046,
+        "start": 59.63,
+        "word": "to"
+      },
+      {
+        "end": 59.795,
+        "score": 0.026,
+        "start": 59.692,
+        "word": "think"
+      },
+      {
+        "end": 59.918,
+        "score": 0.031,
+        "start": 59.815,
+        "word": "about"
+      },
+      {
+        "end": 60.001,
+        "score": 0.2,
+        "start": 59.939,
+        "word": "you"
+      }
+    ]
+  }
+]
