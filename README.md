@@ -53,10 +53,14 @@
   - **Karaoke Mode**: Word-by-word highlighting with precise timestamps (experimental)
 
 ### 📝 Interactive Transcript Features
+- **Live Auto-Highlighting**: Lyrics automatically highlight in sync with video playback (Spotify-style)
+  - Current line highlighted with indigo background
+  - Active word highlighted in gold with glow effect
+  - Auto-scrolls to keep current lyrics visible
 - **Clickable Lyrics**: Click any word or line in the transcript to jump directly to that moment in the video
 - **Auto-Play**: Video automatically starts playing when you click on lyrics
 - **Downloadable Transcript**: Export timestamped transcripts as formatted text files
-- **Spotify-Style UI**: Clean, modern interface with hover effects and smooth interactions
+- **Modern UI**: Clean, Spotify-inspired interface with hover effects and smooth animations
 
 ### ⚡ Real-Time Processing
 - **Live Logs**: Watch real-time processing updates as AI transcribes and renders your video

@@ -83,12 +83,24 @@
             background-color: #4a5568;
             color: #ffffff;
         }
+        /* Active line (currently playing) - Spotify-style auto-highlight */
+        .transcript-line.active {
+            background-color: #5a67d8;
+            color: #ffffff;
+            transform: scale(1.02);
+        }
         .clickable-word {
             cursor: pointer;
             transition: color 0.15s ease;
         }
         .clickable-word:hover {
             color: #7f9cf5;
+        }
+        /* Active word (currently playing) - Spotify-style auto-highlight */
+        .clickable-word.active {
+            color: #fbbf24;
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+            font-weight: 700;
         }
 
         /* Demo banner */
@@ -122,7 +134,7 @@
             <div>
                 <p class="font-semibold text-white mb-1">Demo Mode</p>
                 <p class="text-xs leading-relaxed ml-4">
-                    This is a static demo showcasing the interface and features. Click "Try Demo" to see a pre-processed example video with interactive lyrics.
+                    This is a static demo showcasing the interface and features. Click "Try Demo" to see a pre-processed example video with auto-highlighting lyrics that sync with playback.
                 </p>
             </div>
 
@@ -133,7 +145,8 @@
                     • AI-powered transcription using Whisper<br>
                     • Optional vocal separation for music tracks<br>
                     • Generate synchronized lyric videos<br>
-                    • Interactive clickable lyrics
+                    • <strong>Auto-highlighting lyrics</strong> that sync with video playback (Spotify-style)<br>
+                    • Interactive clickable lyrics with word-level precision
                 </p>
             </div>
 
@@ -251,6 +264,8 @@
             segments.forEach(seg => {
                 const lineDiv = document.createElement('div');
                 lineDiv.className = 'transcript-line';
+                lineDiv.dataset.start = seg.start;
+                lineDiv.dataset.end = seg.end;
 
                 const text = seg.text || '';
                 const words = text.trim().split(/\s+/);
@@ -288,6 +303,45 @@
 
                 transcriptText.appendChild(lineDiv);
             });
+
+            // Add Spotify-style auto-highlighting as video plays
+            if (videoElement) {
+                videoElement.addEventListener('timeupdate', () => {
+                    const currentTime = videoElement.currentTime;
+                    const lines = transcriptText.querySelectorAll('.transcript-line');
+
+                    lines.forEach(line => {
+                        const start = parseFloat(line.dataset.start);
+                        const end = parseFloat(line.dataset.end);
+
+                        if (currentTime >= start && currentTime < end) {
+                            line.classList.add('active');
+
+                            // Highlight current word within the active line
+                            const words = line.querySelectorAll('.clickable-word');
+                            words.forEach(word => {
+                                const wordStart = parseFloat(word.dataset.timestamp);
+                                const nextWord = word.nextElementSibling; // nextElementSibling skips text nodes
+                                const wordEnd = nextWord && nextWord.dataset.timestamp ?
+                                    parseFloat(nextWord.dataset.timestamp) : end;
+
+                                if (currentTime >= wordStart && currentTime < wordEnd) {
+                                    word.classList.add('active');
+                                } else {
+                                    word.classList.remove('active');
+                                }
+                            });
+
+                            // Auto-scroll to keep active line visible
+                            line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            line.classList.remove('active');
+                            const words = line.querySelectorAll('.clickable-word');
+                            words.forEach(word => word.classList.remove('active'));
+                        }
+                    });
+                });
+            }
         }
 
         // Help Modal Toggle

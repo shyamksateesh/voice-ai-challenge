@@ -126,12 +126,24 @@
             background-color: #4a5568; /* gray-600 */
             color: #ffffff;
         }
+        /* Active line (currently playing) - Spotify-style auto-highlight */
+        .transcript-line.active {
+            background-color: #5a67d8; /* indigo-600 */
+            color: #ffffff;
+            transform: scale(1.02);
+        }
         .clickable-word {
             cursor: pointer;
             transition: color 0.15s ease;
         }
         .clickable-word:hover {
             color: #7f9cf5; /* indigo-400 */
+        }
+        /* Active word (currently playing) - Spotify-style auto-highlight */
+        .clickable-word.active {
+            color: #fbbf24; /* amber-400 */
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+            font-weight: 700;
         }
     </style>
 </head>
@@ -174,9 +186,10 @@
                 <p class="font-semibold text-white mb-1">Step 4: Enjoy Your Result</p>
                 <p class="text-xs leading-relaxed ml-4">
                     • Watch the video with synchronized lyrics<br>
+                    • <strong>Auto-Highlighting:</strong> Lyrics automatically highlight as the video plays (Spotify-style)<br>
+                    • <strong>Interactive:</strong> Click any lyric line or word to jump to that moment<br>
                     • Download the video (MP4 format)<br>
-                    • Download the transcript (TXT with timestamps)<br>
-                    • Click any lyric line or word to jump to that moment in the video!
+                    • Download the transcript (TXT with timestamps)
                 </p>
             </div>
         </div>
@@ -230,7 +243,7 @@
                         <option value="base.en">Base - Fast, moderate accuracy</option>
                         <option value="small.en">Small - Balanced</option>
                         <option value="medium.en" selected>Medium - Recommended (Best balance)</option>
-                        <option value="large.en">Large - Slowest, highest accuracy</option>
+                        <option value="large">Large - Slowest, highest accuracy</option>
                     </select>
                 </div>
                 <!-- Processing Options -->
@@ -624,6 +637,8 @@
                 // Create a line div for each segment (Spotify-style)
                 const lineDiv = document.createElement('div');
                 lineDiv.className = 'transcript-line';
+                lineDiv.dataset.start = seg.start;
+                lineDiv.dataset.end = seg.end;
 
                 // Check if we have word-level timestamps (from karaoke mode)
                 if (seg.words && seg.words.length > 0) {
@@ -691,6 +706,50 @@
                 // Add the line to the transcript container
                 transcriptText.appendChild(lineDiv);
             });
+
+            // Add video timeupdate listener for auto-highlighting (Spotify-style)
+            if (videoElement) {
+                videoElement.addEventListener('timeupdate', () => {
+                    const currentTime = videoElement.currentTime;
+
+                    // Find all transcript lines
+                    const lines = transcriptText.querySelectorAll('.transcript-line');
+
+                    lines.forEach(line => {
+                        const start = parseFloat(line.dataset.start);
+                        const end = parseFloat(line.dataset.end);
+
+                        // Check if current time is within this segment
+                        if (currentTime >= start && currentTime < end) {
+                            line.classList.add('active');
+
+                            // Highlight current word within the line
+                            const words = line.querySelectorAll('.clickable-word');
+                            words.forEach(word => {
+                                const wordStart = parseFloat(word.dataset.timestamp);
+                                // Estimate word duration (use next word's start or segment end)
+                                const nextWord = word.nextElementSibling; // nextElementSibling skips text nodes
+                                const wordEnd = nextWord && nextWord.dataset.timestamp ?
+                                    parseFloat(nextWord.dataset.timestamp) : end;
+
+                                if (currentTime >= wordStart && currentTime < wordEnd) {
+                                    word.classList.add('active');
+                                } else {
+                                    word.classList.remove('active');
+                                }
+                            });
+
+                            // Auto-scroll to active line (smooth)
+                            line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            line.classList.remove('active');
+                            // Remove active class from all words in inactive lines
+                            const words = line.querySelectorAll('.clickable-word');
+                            words.forEach(word => word.classList.remove('active'));
+                        }
+                    });
+                });
+            }
         }
 
         // Help Modal Toggle
